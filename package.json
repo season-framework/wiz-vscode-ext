@@ -2,6 +2,12 @@
   "name": "wiz-extension",
   "displayName": "WIZ Extension",
   "description": "Season WIZ IDE Extension",
+  "license": "MIT",
+  "author": "ImuruKevol <kwon3286@season.co.kr>",
+  "repository": {
+    "type": "git",
+    "url": "https://git.nanoha.kr/wiz/vscode-extension.git"
+  },
   "version": "0.0.2",
   "engines": {
     "vscode": "^1.74.0"
