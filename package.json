@@ -131,72 +131,72 @@
       },
       {
         "command": "wiz-extension.openViewPug",
-        "title": "WIZ: Open View (Pug)",
+        "title": "View",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewPugActive",
-        "title": "WIZ: Open View (Pug) - Active",
+        "title": "✔ View",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewHtml",
-        "title": "WIZ: Open View (HTML)",
+        "title": "View",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewHtmlActive",
-        "title": "WIZ: Open View (HTML) - Active",
+        "title": "✔ View",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewTs",
-        "title": "WIZ: Open Component (TypeScript)",
+        "title": "Component",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewTsActive",
-        "title": "WIZ: Open Component (TypeScript) - Active",
+        "title": "✔ Component",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewScss",
-        "title": "WIZ: Open SCSS",
+        "title": "SCSS",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewScssActive",
-        "title": "WIZ: Open SCSS - Active",
+        "title": "✔ SCSS",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openApiPy",
-        "title": "WIZ: Open API (Python)",
+        "title": "API",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openApiPyActive",
-        "title": "WIZ: Open API (Python) - Active",
+        "title": "✔ API",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openSocketPy",
-        "title": "WIZ: Open Socket (Python)",
+        "title": "Socket",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openSocketPyActive",
-        "title": "WIZ: Open Socket (Python) - Active",
+        "title": "✔ Socket",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openAppJson",
-        "title": "WIZ: Open App Info (JSON)",
+        "title": "Info",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openAppJsonActive",
-        "title": "WIZ: Open App Info (JSON) - Active",
+        "title": "✔ Info",
         "category": "WIZ"
       },
       {
@@ -284,52 +284,52 @@
       },
       {
         "command": "wiz-extension.openControllerPy",
-        "title": "WIZ: Open Route Controller (Python)",
+        "title": "Controller",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openControllerPyActive",
-        "title": "WIZ: Open Route Controller (Python) - Active",
+        "title": "✔ Controller",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openRouteAppJson",
-        "title": "WIZ: Open Route Info (JSON)",
+        "title": "Info",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openRouteAppJsonActive",
-        "title": "WIZ: Open Route Info (JSON) - Active",
+        "title": "✔ Info",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewPug",
-        "title": "WIZ: Create View (Pug)",
+        "title": "+ View",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewHtml",
-        "title": "WIZ: Create View (HTML)",
+        "title": "+ View",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewTs",
-        "title": "WIZ: Create Component (TypeScript)",
+        "title": "+ Component",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewScss",
-        "title": "WIZ: Create SCSS",
+        "title": "+ SCSS",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createApiPy",
-        "title": "WIZ: Create API (Python)",
+        "title": "+ API",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createSocketPy",
-        "title": "WIZ: Create Socket (Python)",
+        "title": "+ Socket",
         "category": "WIZ"
       },
       {
