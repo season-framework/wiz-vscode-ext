@@ -67,10 +67,6 @@
     "views": {
       "wiz": [
         {
-          "id": "wizProjects",
-          "name": "Projects"
-        },
-        {
           "id": "wizPage",
           "name": "App Pages"
         },
@@ -207,6 +203,84 @@
         "category": "WIZ"
       },
       {
+        "command": "wiz-extension.deleteAppComponent",
+        "title": "Delete",
+        "icon": "$(trash)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.deleteRoute",
+        "title": "Delete",
+        "icon": "$(trash)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addAppComponent",
+        "title": "Add App Component",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addPage",
+        "title": "Add App Page",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addComponent",
+        "title": "Add App Component",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addLayout",
+        "title": "Add App Layout",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addRoute",
+        "title": "Add Server Route",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.deleteControllerModel",
+        "title": "Delete",
+        "icon": "$(trash)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addController",
+        "title": "Add",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.addModel",
+        "title": "Add",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.deleteAsset",
+        "title": "Delete Asset",
+        "icon": "$(trash)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.downloadAsset",
+        "title": "Download Asset",
+        "icon": "$(download)",
+        "category": "WIZ"
+      },
+      {
+        "command": "wiz-extension.uploadAsset",
+        "title": "Upload Asset",
+        "icon": "$(cloud-upload)",
+        "category": "WIZ"
+      },
+      {
         "command": "wiz-extension.openControllerPy",
         "title": "Controller",
         "category": "WIZ"
@@ -328,15 +402,103 @@
       "view/title": [
         {
           "command": "wiz-extension.refresh",
-          "when": "view == wizProjects || view == wizPage || view == wizComponent || view == wizLayout || view == wizAngular || view == wizAssets || view == wizController || view == wizModel || view == wizRoute",
+          "when": "view == wizPage || view == wizComponent || view == wizLayout || view == wizAngular || view == wizAssets || view == wizController || view == wizModel || view == wizRoute",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.uploadAsset",
+          "title": "Upload",
+          "icon": "$(cloud-upload)",
+          "when": "view == wizAssets",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.addPage",
+          "title": "Add",
+          "icon": "$(plus)",
+          "when": "view == wizPage",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.addComponent",
+          "title": "Add",
+          "icon": "$(plus)",
+          "when": "view == wizComponent",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.addLayout",
+          "title": "Add",
+          "icon": "$(plus)",
+          "when": "view == wizLayout",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.addRoute",
+          "title": "Add",
+          "icon": "$(plus)",
+          "when": "view == wizRoute",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.addController",
+          "title": "Add",
+          "icon": "$(plus)",
+          "when": "view == wizController",
+          "group": "navigation"
+        },
+        {
+          "command": "wiz-extension.addModel",
+          "title": "Add",
+          "icon": "$(plus)",
+          "when": "view == wizModel",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "wiz-extension.selectProject",
-          "when": "view == wizProjects && viewItem == wizProject",
+          "command": "wiz-extension.deleteAppComponent",
+          "when": "view == wizPage && viewItem == wizAppComponent",
           "group": "inline"
+        },
+        {
+          "command": "wiz-extension.deleteAppComponent",
+          "when": "view == wizComponent && viewItem == wizAppComponent",
+          "group": "inline"
+        },
+        {
+          "command": "wiz-extension.deleteAppComponent",
+          "when": "view == wizLayout && viewItem == wizAppComponent",
+          "group": "inline"
+        },
+        {
+          "command": "wiz-extension.deleteRoute",
+          "when": "view == wizRoute && viewItem == wizRouteItem",
+          "group": "inline"
+        },
+        {
+          "command": "wiz-extension.deleteControllerModel",
+          "when": "view == wizController && viewItem == wizCategoryItem",
+          "group": "inline"
+        },
+        {
+          "command": "wiz-extension.deleteControllerModel",
+          "when": "view == wizModel && viewItem == wizCategoryItem",
+          "group": "inline"
+        },
+        {
+          "command": "wiz-extension.deleteAsset",
+          "title": "Delete",
+          "icon": "$(trash)",
+          "when": "view == wizAssets && viewItem == wizCategoryItem",
+          "group": "inline"
+        },
+        {
+          "command": "wiz-extension.downloadAsset",
+          "title": "Download",
+          "icon": "$(download)",
+          "when": "view == wizAssets && viewItem == wizCategoryItem",
+          "group": "navigation"
         }
       ],
       "editor/title": [

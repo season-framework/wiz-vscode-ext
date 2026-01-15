@@ -159,14 +159,25 @@ class CategoryTreeProvider {
                             if (this.isAppComponent(componentPath)) {
                                 const componentType = this.getComponentType(entry.name);
                                 if (componentType === this.categoryType) {
-                                    // app.json에서 제목 가져오기
+                                    // app.json에서 정보 가져오기
                                     const appJsonPath = path.join(componentPath, 'app.json');
                                     let label = entry.name;
                                     if (fs.existsSync(appJsonPath)) {
                                         try {
                                             const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-                                            if (appJson.title) {
-                                                label = `${entry.name} - ${appJson.title}`;
+                                            const title = appJson.title || entry.name;
+                                            
+                                            if (this.categoryType === 'page') {
+                                                // page: title, viewuri 표시
+                                                const viewuri = appJson.viewuri || '';
+                                                label = `${title}${viewuri ? ` - ${viewuri}` : ''}`;
+                                            } else if (this.categoryType === 'component') {
+                                                // component: title 표시
+                                                label = title;
+                                            } else if (this.categoryType === 'layout') {
+                                                // layout: title, namespace 표시
+                                                const namespace = appJson.namespace || '';
+                                                label = `${title}${namespace ? ` [${namespace}]` : ''}`;
                                             }
                                         } catch (e) {
                                             // JSON 파싱 실패 시 이름만 사용
@@ -229,13 +240,14 @@ class CategoryTreeProvider {
                             
                             if (fs.existsSync(appJsonPath) || fs.existsSync(controllerPyPath)) {
                                 let label = entry.name;
-                                // app.json에서 제목 가져오기
+                                // app.json에서 정보 가져오기
                                 if (fs.existsSync(appJsonPath)) {
                                     try {
                                         const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-                                        if (appJson.title) {
-                                            label = `${entry.name} - ${appJson.title}`;
-                                        }
+                                        const title = appJson.title || entry.name;
+                                        // route: title, route 표시
+                                        const route = appJson.route || '';
+                                        label = `${title}${route ? ` - ${route}` : ''}`;
                                     } catch (e) {
                                         // JSON 파싱 실패 시 이름만 사용
                                     }
