@@ -103,281 +103,283 @@
     "commands": [
       {
         "command": "wiz-extension.openComponent",
-        "title": "Open Component Files",
-        "icon": "$(file-code)"
+        "title": "WIZ: Open Component Files",
+        "icon": "$(file-code)",
+        "category": "WIZ"
       },
       {
         "command": "wiz-extension.refresh",
-        "title": "Refresh",
-        "icon": "$(refresh)"
+        "title": "WIZ: Refresh All Views",
+        "icon": "$(refresh)",
+        "category": "WIZ"
       },
       {
         "command": "wiz-extension.selectProject",
-        "title": "Select Project",
+        "title": "WIZ: Select Project",
         "icon": "$(check)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.focusView",
-        "title": "Focus on WIZ App Components",
+        "title": "WIZ: Focus on WIZ Views",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.showComponentInfo",
-        "title": "Show Component Info",
+        "title": "WIZ: Show Component Info",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewPug",
-        "title": "View",
+        "title": "WIZ: Open View (Pug)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewPugActive",
-        "title": "✔ View",
+        "title": "WIZ: Open View (Pug) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewHtml",
-        "title": "View",
+        "title": "WIZ: Open View (HTML)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewHtmlActive",
-        "title": "✔ View",
+        "title": "WIZ: Open View (HTML) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewTs",
-        "title": "Component",
+        "title": "WIZ: Open Component (TypeScript)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewTsActive",
-        "title": "✔ Component",
+        "title": "WIZ: Open Component (TypeScript) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewScss",
-        "title": "SCSS",
+        "title": "WIZ: Open SCSS",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewScssActive",
-        "title": "✔ SCSS",
+        "title": "WIZ: Open SCSS - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openApiPy",
-        "title": "API",
+        "title": "WIZ: Open API (Python)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openApiPyActive",
-        "title": "✔ API",
+        "title": "WIZ: Open API (Python) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openSocketPy",
-        "title": "Socket",
+        "title": "WIZ: Open Socket (Python)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openSocketPyActive",
-        "title": "✔ Socket",
+        "title": "WIZ: Open Socket (Python) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openAppJson",
-        "title": "Info",
+        "title": "WIZ: Open App Info (JSON)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openAppJsonActive",
-        "title": "✔ Info",
+        "title": "WIZ: Open App Info (JSON) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openRoute",
-        "title": "Open Route",
+        "title": "WIZ: Open Route",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteAppComponent",
-        "title": "Delete",
+        "title": "WIZ: Delete App Component (Page/Component/Layout)",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteRoute",
-        "title": "Delete",
+        "title": "WIZ: Delete Server Route",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addAppComponent",
-        "title": "Add App Component",
+        "title": "WIZ: Add App Component",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addPage",
-        "title": "Add App Page",
+        "title": "WIZ: Add App Page",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addComponent",
-        "title": "Add App Component",
+        "title": "WIZ: Add App Component",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addLayout",
-        "title": "Add App Layout",
+        "title": "WIZ: Add App Layout",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addRoute",
-        "title": "Add Server Route",
+        "title": "WIZ: Add Server Route",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteControllerModel",
-        "title": "Delete",
+        "title": "WIZ: Delete Server Controller or Model",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addController",
-        "title": "Add",
+        "title": "WIZ: Add Server Controller",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addModel",
-        "title": "Add",
+        "title": "WIZ: Add Server Model",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteAsset",
-        "title": "Delete Asset",
+        "title": "WIZ: Delete Asset File or Folder",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.downloadAsset",
-        "title": "Download Asset",
+        "title": "WIZ: Download Asset File",
         "icon": "$(download)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.uploadAsset",
-        "title": "Upload Asset",
+        "title": "WIZ: Upload Asset File",
         "icon": "$(cloud-upload)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openControllerPy",
-        "title": "Controller",
+        "title": "WIZ: Open Route Controller (Python)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openControllerPyActive",
-        "title": "✔ Controller",
+        "title": "WIZ: Open Route Controller (Python) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openRouteAppJson",
-        "title": "Info",
+        "title": "WIZ: Open Route Info (JSON)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openRouteAppJsonActive",
-        "title": "✔ Info",
+        "title": "WIZ: Open Route Info (JSON) - Active",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewPug",
-        "title": "+ View",
+        "title": "WIZ: Create View (Pug)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewHtml",
-        "title": "+ View",
+        "title": "WIZ: Create View (HTML)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewTs",
-        "title": "+ Component",
+        "title": "WIZ: Create Component (TypeScript)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createViewScss",
-        "title": "+ SCSS",
+        "title": "WIZ: Create SCSS",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createApiPy",
-        "title": "+ API",
+        "title": "WIZ: Create API (Python)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.createSocketPy",
-        "title": "+ Socket",
+        "title": "WIZ: Create Socket (Python)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewPugCopyPath",
-        "title": "Copy View (Pug) Path",
+        "title": "WIZ: Copy View (Pug) Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewHtmlCopyPath",
-        "title": "Copy View (HTML) Path",
+        "title": "WIZ: Copy View (HTML) Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewTsCopyPath",
-        "title": "Copy Component Path",
+        "title": "WIZ: Copy Component Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openViewScssCopyPath",
-        "title": "Copy SCSS Path",
+        "title": "WIZ: Copy SCSS Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openApiPyCopyPath",
-        "title": "Copy API Path",
+        "title": "WIZ: Copy API Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openSocketPyCopyPath",
-        "title": "Copy Socket Path",
+        "title": "WIZ: Copy Socket Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openAppJsonCopyPath",
-        "title": "Copy Info Path",
+        "title": "WIZ: Copy App Info Path to Clipboard",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.navigatePrevious",
-        "title": "Navigate to Previous File",
+        "title": "WIZ: Navigate to Previous File",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.navigateNext",
-        "title": "Navigate to Next File",
+        "title": "WIZ: Navigate to Next File",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.openInSplit",
-        "title": "Open in Split View",
+        "title": "WIZ: Open Current File in Split View",
         "category": "WIZ"
       }
     ],

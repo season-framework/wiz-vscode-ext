@@ -1339,13 +1339,79 @@ export class Component implements OnInit {
     if (component && typeof component === 'object') {
       folderPath = component.folderPath;
       componentName = component.name;
-    } else {
+    } else if (component && typeof component === 'string') {
       folderPath = component;
       componentName = path.basename(component);
     }
 
+    // path가 없으면 목록에서 선택
     if (!folderPath) {
-      return;
+      // 프로젝트 확인
+      let projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+      if (!projectPath) {
+        await vscode.commands.executeCommand('wiz-extension.selectProject');
+        projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (!projectPath) {
+          vscode.window.showErrorMessage('Please select a project first.');
+          return;
+        }
+      }
+
+      const srcPath = path.join(projectPath, 'src');
+      const appPath = path.join(srcPath, 'app');
+      if (!fs.existsSync(appPath)) {
+        vscode.window.showErrorMessage('No app components found.');
+        return;
+      }
+
+      // 모든 app components 목록 가져오기
+      const components = [];
+      try {
+        const entries = fs.readdirSync(appPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory() && !entry.name.startsWith('__')) {
+            const componentPath = path.join(appPath, entry.name);
+            const appJsonPath = path.join(componentPath, 'app.json');
+            if (fs.existsSync(appJsonPath)) {
+              try {
+                const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                components.push({
+                  label: entry.name,
+                  description: appJson.title || entry.name,
+                  folderPath: componentPath
+                });
+              } catch (e) {
+                components.push({
+                  label: entry.name,
+                  description: entry.name,
+                  folderPath: componentPath
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading ${appPath}:`, error);
+        vscode.window.showErrorMessage(`Failed to read app directory: ${error.message}`);
+        return;
+      }
+
+      if (components.length === 0) {
+        vscode.window.showInformationMessage('No app components found.');
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(components, {
+        placeHolder: 'Select an app component to delete',
+        ignoreFocusOut: true
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      folderPath = selected.folderPath;
+      componentName = selected.label;
     }
 
     const result = await vscode.window.showWarningMessage(
@@ -1386,13 +1452,89 @@ export class Component implements OnInit {
     if (route && typeof route === 'object') {
       folderPath = route.folderPath;
       routeName = route.name;
-    } else {
+    } else if (route && typeof route === 'string') {
       folderPath = route;
       routeName = path.basename(route);
     }
 
+    // path가 없으면 목록에서 선택
     if (!folderPath) {
-      return;
+      // 프로젝트 확인
+      let projectPath = categoryTreeProviders['route'] ? categoryTreeProviders['route'].selectedProjectPath : null;
+      if (!projectPath && appTreeProvider) {
+        projectPath = appTreeProvider.selectedProjectPath;
+      }
+      if (!projectPath) {
+        await vscode.commands.executeCommand('wiz-extension.selectProject');
+        projectPath = categoryTreeProviders['route'] ? categoryTreeProviders['route'].selectedProjectPath : null;
+        if (!projectPath && appTreeProvider) {
+          projectPath = appTreeProvider.selectedProjectPath;
+        }
+        if (!projectPath) {
+          vscode.window.showErrorMessage('Please select a project first.');
+          return;
+        }
+      }
+
+      const srcPath = path.join(projectPath, 'src');
+      const routePath = path.join(srcPath, 'route');
+      if (!fs.existsSync(routePath)) {
+        vscode.window.showErrorMessage('No routes found.');
+        return;
+      }
+
+      // 모든 route 목록 가져오기
+      const routes = [];
+      try {
+        const entries = fs.readdirSync(routePath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const routeItemPath = path.join(routePath, entry.name);
+            const appJsonPath = path.join(routeItemPath, 'app.json');
+            if (fs.existsSync(appJsonPath) || fs.existsSync(path.join(routeItemPath, 'controller.py'))) {
+              try {
+                let description = entry.name;
+                if (fs.existsSync(appJsonPath)) {
+                  const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                  description = appJson.title || entry.name;
+                }
+                routes.push({
+                  label: entry.name,
+                  description: description,
+                  folderPath: routeItemPath
+                });
+              } catch (e) {
+                routes.push({
+                  label: entry.name,
+                  description: entry.name,
+                  folderPath: routeItemPath
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading ${routePath}:`, error);
+        vscode.window.showErrorMessage(`Failed to read route directory: ${error.message}`);
+        return;
+      }
+
+      if (routes.length === 0) {
+        vscode.window.showInformationMessage('No routes found.');
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(routes, {
+        placeHolder: 'Select a route to delete',
+        ignoreFocusOut: true
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      folderPath = selected.folderPath;
+      routeName = selected.label;
     }
 
     const result = await vscode.window.showWarningMessage(
@@ -1754,19 +1896,95 @@ export class Component implements OnInit {
   // 삭제 명령어 (Controller/Model 파일)
   let deleteControllerModelCommand = vscode.commands.registerCommand('wiz-extension.deleteControllerModel', async (item) => {
     let filePath, itemName, categoryType;
-
+    
     // CategoryItem 객체인 경우
     if (item && typeof item === 'object' && item.filePath) {
       filePath = item.filePath;
       itemName = path.basename(filePath);
       categoryType = item.type;
-    } else if (typeof item === 'string') {
+    } else if (item && typeof item === 'string') {
       filePath = item;
       itemName = path.basename(filePath);
       // 경로에서 categoryType 추론
       categoryType = filePath.includes('/controller/') ? 'controller' : 'model';
-    } else {
-      return;
+    }
+
+    // path가 없으면 목록에서 선택
+    if (!filePath) {
+      // 먼저 categoryType 선택
+      const categorySelection = await vscode.window.showQuickPick([
+        { label: 'Server Controller', categoryType: 'controller' },
+        { label: 'Server Model', categoryType: 'model' }
+      ], {
+        placeHolder: 'Select category',
+        ignoreFocusOut: true
+      });
+
+      if (!categorySelection) {
+        return;
+      }
+
+      categoryType = categorySelection.categoryType;
+
+      // 프로젝트 확인
+      let projectPath = categoryTreeProviders[categoryType] ? categoryTreeProviders[categoryType].selectedProjectPath : null;
+      if (!projectPath && appTreeProvider) {
+        projectPath = appTreeProvider.selectedProjectPath;
+      }
+      if (!projectPath) {
+        await vscode.commands.executeCommand('wiz-extension.selectProject');
+        projectPath = categoryTreeProviders[categoryType] ? categoryTreeProviders[categoryType].selectedProjectPath : null;
+        if (!projectPath && appTreeProvider) {
+          projectPath = appTreeProvider.selectedProjectPath;
+        }
+        if (!projectPath) {
+          vscode.window.showErrorMessage('Please select a project first.');
+          return;
+        }
+      }
+
+      const srcPath = path.join(projectPath, 'src');
+      const targetPath = path.join(srcPath, categoryType);
+      if (!fs.existsSync(targetPath)) {
+        vscode.window.showErrorMessage(`No ${categorySelection.label.toLowerCase()} files found.`);
+        return;
+      }
+
+      // 모든 파일 목록 가져오기
+      const files = [];
+      try {
+        const entries = fs.readdirSync(targetPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isFile() && entry.name.endsWith('.py')) {
+            files.push({
+              label: entry.name,
+              description: entry.name,
+              filePath: path.join(targetPath, entry.name)
+            });
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading ${targetPath}:`, error);
+        vscode.window.showErrorMessage(`Failed to read directory: ${error.message}`);
+        return;
+      }
+
+      if (files.length === 0) {
+        vscode.window.showInformationMessage(`No ${categorySelection.label.toLowerCase()} files found.`);
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(files, {
+        placeHolder: `Select a ${categorySelection.label.toLowerCase()} file to delete`,
+        ignoreFocusOut: true
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      filePath = selected.filePath;
+      itemName = selected.label;
     }
 
     if (!filePath || !fs.existsSync(filePath)) {
@@ -2117,11 +2335,88 @@ export class Component implements OnInit {
     if (item && typeof item === 'object' && item.filePath) {
       filePath = item.filePath;
       itemName = path.basename(filePath);
-    } else if (typeof item === 'string') {
+    } else if (item && typeof item === 'string') {
       filePath = item;
       itemName = path.basename(filePath);
-    } else {
-      return;
+    }
+
+    // path가 없으면 목록에서 선택
+    if (!filePath) {
+      // 프로젝트 확인
+      let projectPath = categoryTreeProviders['assets'] ? categoryTreeProviders['assets'].selectedProjectPath : null;
+      if (!projectPath && appTreeProvider) {
+        projectPath = appTreeProvider.selectedProjectPath;
+      }
+      if (!projectPath) {
+        await vscode.commands.executeCommand('wiz-extension.selectProject');
+        projectPath = categoryTreeProviders['assets'] ? categoryTreeProviders['assets'].selectedProjectPath : null;
+        if (!projectPath && appTreeProvider) {
+          projectPath = appTreeProvider.selectedProjectPath;
+        }
+        if (!projectPath) {
+          vscode.window.showErrorMessage('Please select a project first.');
+          return;
+        }
+      }
+
+      const srcPath = path.join(projectPath, 'src');
+      const assetsPath = path.join(srcPath, 'assets');
+      if (!fs.existsSync(assetsPath)) {
+        vscode.window.showErrorMessage('No assets found.');
+        return;
+      }
+
+      // 모든 assets 목록 가져오기 (재귀적으로)
+      const getAllAssets = (dir, basePath) => {
+        const items = [];
+        try {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.name.startsWith('__') || entry.name.startsWith('.')) {
+              continue;
+            }
+            const entryPath = path.join(dir, entry.name);
+            const relativePath = path.relative(basePath, entryPath);
+            if (entry.isDirectory()) {
+              items.push({
+                label: entry.name,
+                description: `📁 ${relativePath}`,
+                filePath: entryPath
+              });
+              // 하위 항목도 추가
+              items.push(...getAllAssets(entryPath, basePath));
+            } else {
+              items.push({
+                label: entry.name,
+                description: `📄 ${relativePath}`,
+                filePath: entryPath
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Error reading ${dir}:`, error);
+        }
+        return items;
+      };
+
+      const assets = getAllAssets(assetsPath, assetsPath);
+
+      if (assets.length === 0) {
+        vscode.window.showInformationMessage('No assets found.');
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(assets, {
+        placeHolder: 'Select an asset file or folder to delete',
+        ignoreFocusOut: true
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      filePath = selected.filePath;
+      itemName = selected.label;
     }
 
     if (!filePath || !fs.existsSync(filePath)) {
@@ -2169,11 +2464,83 @@ export class Component implements OnInit {
     if (item && typeof item === 'object' && item.filePath) {
       filePath = item.filePath;
       itemName = path.basename(filePath);
-    } else if (typeof item === 'string') {
+    } else if (item && typeof item === 'string') {
       filePath = item;
       itemName = path.basename(filePath);
-    } else {
-      return;
+    }
+
+    // path가 없으면 목록에서 선택
+    if (!filePath) {
+      // 프로젝트 확인
+      let projectPath = categoryTreeProviders['assets'] ? categoryTreeProviders['assets'].selectedProjectPath : null;
+      if (!projectPath && appTreeProvider) {
+        projectPath = appTreeProvider.selectedProjectPath;
+      }
+      if (!projectPath) {
+        await vscode.commands.executeCommand('wiz-extension.selectProject');
+        projectPath = categoryTreeProviders['assets'] ? categoryTreeProviders['assets'].selectedProjectPath : null;
+        if (!projectPath && appTreeProvider) {
+          projectPath = appTreeProvider.selectedProjectPath;
+        }
+        if (!projectPath) {
+          vscode.window.showErrorMessage('Please select a project first.');
+          return;
+        }
+      }
+
+      const srcPath = path.join(projectPath, 'src');
+      const assetsPath = path.join(srcPath, 'assets');
+      if (!fs.existsSync(assetsPath)) {
+        vscode.window.showErrorMessage('No assets found.');
+        return;
+      }
+
+      // 모든 파일 목록 가져오기 (디렉토리 제외)
+      const getAllFiles = (dir, basePath) => {
+        const items = [];
+        try {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.name.startsWith('__') || entry.name.startsWith('.')) {
+              continue;
+            }
+            const entryPath = path.join(dir, entry.name);
+            const relativePath = path.relative(basePath, entryPath);
+            if (entry.isDirectory()) {
+              // 하위 파일들도 추가
+              items.push(...getAllFiles(entryPath, basePath));
+            } else {
+              items.push({
+                label: entry.name,
+                description: `📄 ${relativePath}`,
+                filePath: entryPath
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Error reading ${dir}:`, error);
+        }
+        return items;
+      };
+
+      const files = getAllFiles(assetsPath, assetsPath);
+
+      if (files.length === 0) {
+        vscode.window.showInformationMessage('No asset files found.');
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(files, {
+        placeHolder: 'Select an asset file to download',
+        ignoreFocusOut: true
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      filePath = selected.filePath;
+      itemName = selected.label;
     }
 
     if (!filePath || !fs.existsSync(filePath)) {
