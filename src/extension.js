@@ -72,6 +72,28 @@ const appJsonTemplate = {
     "route": "/test", // 입력받아야 함. 필수값. Flask Route Path 형태로 입력.
     "controller": "base" // server controller 목록에서 선택. 빈 값(null) 선택 가능
   },
+  "portal.component": {
+    "type": "app", // app 고정
+    "mode": "portal", // portal 고정
+    "namespace": "test", // 입력받아야 함. 필수값. 영어 소문자와 dot(.) 만 허용.
+    "id": "test", // namespace와 같은 값으로 자동 생성
+    "title": "Test", // 입력받아야 함. 생략 시 namespace값으로 자동 부여
+    "viewuri": "",
+    "category": "",
+    "controller": "", // server controller 목록에서 선택. 빈 값(null) 선택 가능
+    "template": "wiz-portal-modulename-test()", // wiz-portal-{module_name}-{namespace} 형태 자동 생성. namespace에 dot(.)이 있으면 -로 변환. html일 시 <wiz-portal-{module_name}-{namespace} /> 형태로 자동 생성. pug일 시 wiz-portal-{module_name}-{namespace}() 형태로 자동 생성.
+  },
+  "portal.widget": {
+    "type": "widget", // widget 고정
+    "mode": "portal", // portal 고정
+    "namespace": "widget.test", // 입력받아야 함. 필수값. 영어 소문자와 dot(.) 만 허용. 입력 받은 값 앞에 "widget." 자동 추가
+    "id": "widget.test", // namespace와 같은 값으로 자동 생성
+    "title": "Widget Test", // 입력받아야 함. 생략 시 namespace값으로 자동 부여
+    "viewuri": "",
+    "category": "",
+    "controller": "", // server controller 목록에서 선택. 빈 값(null) 선택 가능
+    "template": "wiz-portal-modulename-test()", // wiz-portal-{module_name}-{namespace} 형태 자동 생성. namespace에 dot(.)이 있으면 -로 변환. html일 시 <wiz-portal-{module_name}-{namespace} /> 형태로 자동 생성. pug일 시 wiz-portal-{module_name}-{namespace}() 형태로 자동 생성.
+  },
 };
 
 function activate(context) {
@@ -428,14 +450,36 @@ function activate(context) {
       return;
     }
 
-    const files = appTreeProvider.getComponentViewFiles(folderPath);
+    let files = appTreeProvider.getComponentViewFiles(folderPath);
 
+    // view 파일이 없으면 자동으로 생성
     if (files.length === 0) {
-      vscode.window.showWarningMessage(`No view files found in ${componentName}`);
-      return;
+      try {
+        // 프로젝트 경로에서 template 타입 확인 (html / pug)
+        const projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        const templateType = projectPath ? getTemplateType(projectPath) : 'pug';
+        const viewFileName = templateType === 'html' ? 'view.html' : 'view.pug';
+        const targetPath = path.join(folderPath, viewFileName);
+
+        // 기본 템플릿 생성
+        const template = getFileTemplate(viewFileName, folderPath);
+        fs.writeFileSync(targetPath, template, 'utf8');
+
+        // 파일 목록 갱신
+        files = [targetPath];
+
+        // 컨텍스트 업데이트 (버튼/단축키 상태 반영)
+        if (typeof updateFileTypeContexts === 'function') {
+          updateFileTypeContexts();
+        }
+      } catch (error) {
+        console.error(`Failed to create view file in ${folderPath}:`, error);
+        vscode.window.showErrorMessage(`Failed to create view file: ${error.message}`);
+        return;
+      }
     }
 
-    // pug 파일이 있으면 pug를, 없으면 html을 열기
+    // pug 파일이 있으면 pug를, 없으면 첫 번째 파일 열기
     const fileToOpen = files.find(f => f.endsWith('.pug')) || files[0];
 
     try {
@@ -1358,42 +1402,120 @@ export class Component implements OnInit {
       }
 
       const srcPath = path.join(projectPath, 'src');
-      const appPath = path.join(srcPath, 'app');
-      if (!fs.existsSync(appPath)) {
-        vscode.window.showErrorMessage('No app components found.');
-        return;
-      }
 
-      // 모든 app components 목록 가져오기
+      // 모든 app components 목록 가져오기 (기본 + portal framework)
       const components = [];
-      try {
-        const entries = fs.readdirSync(appPath, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isDirectory() && !entry.name.startsWith('__')) {
-            const componentPath = path.join(appPath, entry.name);
-            const appJsonPath = path.join(componentPath, 'app.json');
-            if (fs.existsSync(appJsonPath)) {
-              try {
-                const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-                components.push({
-                  label: entry.name,
-                  description: appJson.title || entry.name,
-                  folderPath: componentPath
-                });
-              } catch (e) {
-                components.push({
-                  label: entry.name,
-                  description: entry.name,
-                  folderPath: componentPath
-                });
+
+      // 1) 기본 src/app
+      const appPath = path.join(srcPath, 'app');
+      if (fs.existsSync(appPath)) {
+        try {
+          const entries = fs.readdirSync(appPath, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory() && !entry.name.startsWith('__')) {
+              const componentPath = path.join(appPath, entry.name);
+              const appJsonPath = path.join(componentPath, 'app.json');
+              if (fs.existsSync(appJsonPath)) {
+                try {
+                  const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                  components.push({
+                    label: entry.name,
+                    description: appJson.title || entry.name,
+                    folderPath: componentPath
+                  });
+                } catch (e) {
+                  components.push({
+                    label: entry.name,
+                    description: entry.name,
+                    folderPath: componentPath
+                  });
+                }
               }
             }
           }
+        } catch (error) {
+          console.error(`Error reading ${appPath}:`, error);
+          vscode.window.showErrorMessage(`Failed to read app directory: ${error.message}`);
+          return;
         }
-      } catch (error) {
-        console.error(`Error reading ${appPath}:`, error);
-        vscode.window.showErrorMessage(`Failed to read app directory: ${error.message}`);
-        return;
+      }
+
+      // 2) portal framework: src/portal/[module]/app, src/portal/[module]/widget
+      const portalRoot = path.join(srcPath, 'portal');
+      if (fs.existsSync(portalRoot)) {
+        try {
+          const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+          for (const portalEntry of portalEntries) {
+            if (!portalEntry.isDirectory() || portalEntry.name.startsWith('__')) continue;
+            const moduleName = portalEntry.name;
+            const modulePath = path.join(portalRoot, moduleName);
+            const prefix = `[${moduleName}]`;
+
+            const portalAppPath = path.join(modulePath, 'app');
+            if (fs.existsSync(portalAppPath)) {
+              try {
+                const entries = fs.readdirSync(portalAppPath, { withFileTypes: true });
+                for (const entry of entries) {
+                  if (entry.isDirectory() && !entry.name.startsWith('__')) {
+                    const componentPath = path.join(portalAppPath, entry.name);
+                    const appJsonPath = path.join(componentPath, 'app.json');
+                    if (fs.existsSync(appJsonPath)) {
+                      try {
+                        const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                        components.push({
+                          label: `${prefix} ${entry.name}`,
+                          description: appJson.title || entry.name,
+                          folderPath: componentPath
+                        });
+                      } catch (e) {
+                        components.push({
+                          label: `${prefix} ${entry.name}`,
+                          description: entry.name,
+                          folderPath: componentPath
+                        });
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error(`Error reading portal app path: ${portalAppPath}`, e);
+              }
+            }
+
+            const portalWidgetPath = path.join(modulePath, 'widget');
+            if (fs.existsSync(portalWidgetPath)) {
+              try {
+                const entries = fs.readdirSync(portalWidgetPath, { withFileTypes: true });
+                for (const entry of entries) {
+                  if (entry.isDirectory() && !entry.name.startsWith('__')) {
+                    const componentPath = path.join(portalWidgetPath, entry.name);
+                    const appJsonPath = path.join(componentPath, 'app.json');
+                    if (fs.existsSync(appJsonPath)) {
+                      try {
+                        const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                        components.push({
+                          label: `${prefix} ${entry.name}`,
+                          description: appJson.title || entry.name,
+                          folderPath: componentPath
+                        });
+                      } catch (e) {
+                        components.push({
+                          label: `${prefix} ${entry.name}`,
+                          description: entry.name,
+                          folderPath: componentPath
+                        });
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error(`Error reading portal widget path: ${portalWidgetPath}`, e);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error reading portal root for deleteAppComponent:', e);
+        }
       }
 
       if (components.length === 0) {
@@ -1477,46 +1599,97 @@ export class Component implements OnInit {
       }
 
       const srcPath = path.join(projectPath, 'src');
-      const routePath = path.join(srcPath, 'route');
-      if (!fs.existsSync(routePath)) {
-        vscode.window.showErrorMessage('No routes found.');
-        return;
-      }
 
-      // 모든 route 목록 가져오기
+      // 모든 route 목록 가져오기 (기본 + portal framework)
       const routes = [];
-      try {
-        const entries = fs.readdirSync(routePath, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isDirectory()) {
-            const routeItemPath = path.join(routePath, entry.name);
-            const appJsonPath = path.join(routeItemPath, 'app.json');
-            if (fs.existsSync(appJsonPath) || fs.existsSync(path.join(routeItemPath, 'controller.py'))) {
-              try {
-                let description = entry.name;
-                if (fs.existsSync(appJsonPath)) {
-                  const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-                  description = appJson.title || entry.name;
+
+      // 1) 기본 src/route
+      const routePath = path.join(srcPath, 'route');
+      if (fs.existsSync(routePath)) {
+        try {
+          const entries = fs.readdirSync(routePath, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              const routeItemPath = path.join(routePath, entry.name);
+              const appJsonPath = path.join(routeItemPath, 'app.json');
+              if (fs.existsSync(appJsonPath) || fs.existsSync(path.join(routeItemPath, 'controller.py'))) {
+                try {
+                  let description = entry.name;
+                  if (fs.existsSync(appJsonPath)) {
+                    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                    description = appJson.title || entry.name;
+                  }
+                  routes.push({
+                    label: entry.name,
+                    description: description,
+                    folderPath: routeItemPath
+                  });
+                } catch (e) {
+                  routes.push({
+                    label: entry.name,
+                    description: entry.name,
+                    folderPath: routeItemPath
+                  });
                 }
-                routes.push({
-                  label: entry.name,
-                  description: description,
-                  folderPath: routeItemPath
-                });
-              } catch (e) {
-                routes.push({
-                  label: entry.name,
-                  description: entry.name,
-                  folderPath: routeItemPath
-                });
               }
             }
           }
+        } catch (error) {
+          console.error(`Error reading ${routePath}:`, error);
+          vscode.window.showErrorMessage(`Failed to read route directory: ${error.message}`);
+          return;
         }
-      } catch (error) {
-        console.error(`Error reading ${routePath}:`, error);
-        vscode.window.showErrorMessage(`Failed to read route directory: ${error.message}`);
-        return;
+      }
+
+      // 2) portal framework: src/portal/[module]/route
+      const portalRoot = path.join(srcPath, 'portal');
+      if (fs.existsSync(portalRoot)) {
+        try {
+          const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+          for (const portalEntry of portalEntries) {
+            if (!portalEntry.isDirectory() || portalEntry.name.startsWith('__')) continue;
+            const moduleName = portalEntry.name;
+            const modulePath = path.join(portalRoot, moduleName);
+            const prefix = `[${moduleName}]`;
+
+            const portalRoutePath = path.join(modulePath, 'route');
+            if (!fs.existsSync(portalRoutePath)) continue;
+
+            try {
+              const entries = fs.readdirSync(portalRoutePath, { withFileTypes: true });
+              for (const entry of entries) {
+                if (entry.isDirectory()) {
+                  const routeItemPath = path.join(portalRoutePath, entry.name);
+                  const appJsonPath = path.join(routeItemPath, 'app.json');
+                  if (fs.existsSync(appJsonPath) || fs.existsSync(path.join(routeItemPath, 'controller.py'))) {
+                    try {
+                      let description = entry.name;
+                      if (fs.existsSync(appJsonPath)) {
+                        const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                        description = appJson.title || entry.name;
+                      }
+                      routes.push({
+                        label: `${prefix} ${entry.name}`,
+                        description: description,
+                        folderPath: routeItemPath
+                      });
+                    } catch (e) {
+                      routes.push({
+                        label: `${prefix} ${entry.name}`,
+                        description: entry.name,
+                        folderPath: routeItemPath
+                      });
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              console.error(`Error reading portal route path: ${portalRoutePath}`, e);
+            }
+          }
+        } catch (e) {
+          console.error('Error reading portal root for deleteRoute:', e);
+        }
       }
 
       if (routes.length === 0) {
@@ -1637,12 +1810,96 @@ export class Component implements OnInit {
       }
     }
     const srcPath = path.join(projectPath, 'src');
-    const appPath = path.join(srcPath, 'app');
+
+    // 생성 위치 선택 (특히 component의 경우 portal framework 지원)
+    let appBasePath = path.join(srcPath, 'app');
+    let locationLabel = 'Default app (src/app)';
+    let isPortal = false;
+    let portalType = null; // 'app' or 'widget'
+    let portalModuleName = null;
+
+    if (categoryType === 'component') {
+      const locations = [];
+
+      // 기본 app
+      locations.push({
+        label: 'Default app (src/app)',
+        description: path.relative(projectPath, appBasePath),
+        basePath: appBasePath,
+        isPortal: false
+      });
+
+      // portal framework 모듈들 검색
+      const portalRoot = path.join(srcPath, 'portal');
+      if (fs.existsSync(portalRoot)) {
+        try {
+          const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+          for (const entry of portalEntries) {
+            if (!entry.isDirectory() || entry.name.startsWith('__')) continue;
+            const moduleName = entry.name;
+            const modulePath = path.join(portalRoot, moduleName);
+
+            const portalAppPath = path.join(modulePath, 'app');
+            if (fs.existsSync(portalAppPath)) {
+              locations.push({
+                label: `[${moduleName}] app (portal/${moduleName}/app)`,
+                description: path.relative(projectPath, portalAppPath),
+                basePath: portalAppPath,
+                isPortal: true,
+                portalType: 'app',
+                portalModuleName: moduleName
+              });
+            }
+
+            const portalWidgetPath = path.join(modulePath, 'widget');
+            if (fs.existsSync(portalWidgetPath)) {
+              locations.push({
+                label: `[${moduleName}] widget (portal/${moduleName}/widget)`,
+                description: path.relative(projectPath, portalWidgetPath),
+                basePath: portalWidgetPath,
+                isPortal: true,
+                portalType: 'widget',
+                portalModuleName: moduleName
+              });
+            }
+          }
+        } catch (e) {
+          console.error('[wiz-extension] Failed to read portal directory:', e);
+        }
+      }
+
+      // 위치 선택 (옵션이 여러 개일 때만)
+      if (locations.length > 1) {
+        const selectedLocation = await vscode.window.showQuickPick(locations, {
+          placeHolder: 'Select where to create the component (default app or portal module)',
+          ignoreFocusOut: true
+        });
+
+        if (!selectedLocation) {
+          return;
+        }
+
+        appBasePath = selectedLocation.basePath;
+        locationLabel = selectedLocation.label;
+        isPortal = selectedLocation.isPortal || false;
+        portalType = selectedLocation.portalType || null;
+        portalModuleName = selectedLocation.portalModuleName || null;
+      }
+    }
 
     // namespace 입력 (필수)
-    const namespace = await vscode.window.showInputBox({
-      prompt: `Enter ${categoryName} namespace (e.g., main, header) - lowercase letters and dots only`,
-      placeHolder: 'main',
+    let namespacePrompt = `Enter ${categoryName} namespace (e.g., main, header) - lowercase letters and dots only`;
+    let namespacePlaceholder = 'main';
+    
+    // portal widget인 경우 안내 추가
+    if (isPortal && portalType === 'widget') {
+      namespacePrompt = `Enter ${categoryName} namespace (e.g., test) - "widget." will be automatically prepended`;
+      namespacePlaceholder = 'test';
+    }
+
+    const namespaceInput = await vscode.window.showInputBox({
+      prompt: namespacePrompt,
+      placeHolder: namespacePlaceholder,
       validateInput: (value) => {
         if (!value || value.trim().length === 0) {
           return 'Namespace cannot be empty';
@@ -1654,8 +1911,16 @@ export class Component implements OnInit {
       }
     });
 
-    if (!namespace) {
+    if (!namespaceInput) {
       return;
+    }
+
+    // portal widget인 경우 "widget." prefix 자동 추가
+    let namespace = namespaceInput.trim();
+    if (isPortal && portalType === 'widget') {
+      if (!namespace.startsWith('widget.')) {
+        namespace = `widget.${namespace}`;
+      }
     }
 
     // title 입력 (선택, 생략 시 namespace 사용)
@@ -1666,6 +1931,8 @@ export class Component implements OnInit {
     });
 
     const title = titleInput && titleInput.trim() ? titleInput.trim() : namespace;
+
+    // portal인 경우 category는 입력받지 않음 (빈 문자열로 유지)
 
     // page인 경우 추가 입력
     let viewuri = null;
@@ -1767,60 +2034,101 @@ export class Component implements OnInit {
       }
     }
 
-    // id 생성
-    const id = `${categoryType}.${namespace}`;
+    // portal인 경우와 아닌 경우 분기
+    let appJson;
+    let id;
+    let componentPath;
 
-    // ng.build.name 생성
-    const componentName = generateComponentName(id);
+    if (isPortal) {
+      // portal framework: id는 namespace와 동일
+      id = namespace;
 
-    // ng.selector 생성
-    const selector = generateSelector(categoryType, namespace);
+      // template 생성: wiz-portal-{module_name}-{namespace} 형태
+      // namespace의 dot(.)을 -로 변환
+      const templateNamespace = namespace.replace(/\./g, '-');
+      const templateBase = `wiz-portal-${portalModuleName}-${templateNamespace}`;
+      
+      const templateType = getTemplateType(projectPath);
+      let template;
+      if (templateType === 'html') {
+        template = `<${templateBase} />`;
+      } else {
+        template = `${templateBase}()`;
+      }
 
-    // template 타입 확인
-    const templateType = getTemplateType(projectPath);
+      // app.json 생성 (portal 구조)
+      appJson = {
+        type: portalType, // 'app' or 'widget'
+        mode: 'portal',
+        namespace: namespace,
+        id: id,
+        title: title,
+        viewuri: '',
+        controller: controller || '',
+        template: template
+      };
 
-    // template 생성
-    const template = generateTemplate(selector, templateType);
-
-    // app.json 생성
-    const appJson = {
-      mode: categoryType,
-      namespace: namespace,
-      id: id,
-      title: title
-    };
-
-    if (categoryType === 'page') {
-      appJson.viewuri = viewuri;
-      appJson.layout = layout;
-    }
-
-    // controller 추가 (page, component, layout 모두)
-    if (controller) {
-      appJson.controller = controller;
+      // componentPath는 namespace로 생성 (id와 동일)
+      componentPath = path.join(appBasePath, id);
     } else {
-      appJson.controller = '';
+      // 기존 로직 (default app)
+      // id 생성
+      id = `${categoryType}.${namespace}`;
+
+      // ng.build.name 생성
+      const componentName = generateComponentName(id);
+
+      // ng.selector 생성
+      const selector = generateSelector(categoryType, namespace);
+
+      // template 타입 확인
+      const templateType = getTemplateType(projectPath);
+
+      // template 생성
+      const template = generateTemplate(selector, templateType);
+
+      // app.json 생성
+      appJson = {
+        mode: categoryType,
+        namespace: namespace,
+        id: id,
+        title: title
+      };
+
+      if (categoryType === 'page') {
+        appJson.viewuri = viewuri;
+        appJson.layout = layout;
+      }
+
+      // controller 추가 (page, component, layout 모두)
+      if (controller) {
+        appJson.controller = controller;
+      } else {
+        appJson.controller = '';
+      }
+
+      // ng.build 추가
+      appJson['ng.build'] = {
+        id: id,
+        name: componentName,
+        path: `./${id}/${id}.component`
+      };
+
+      // ng 추가
+      appJson.ng = {
+        selector: selector,
+        inputs: [],
+        outputs: []
+      };
+
+      // template 추가
+      appJson.template = template;
+
+      // componentPath는 id로 생성
+      componentPath = path.join(appBasePath, id);
     }
 
-    // ng.build 추가
-    appJson['ng.build'] = {
-      id: id,
-      name: componentName,
-      path: `./${id}/${id}.component`
-    };
-
-    // ng 추가
-    appJson.ng = {
-      selector: selector,
-      inputs: [],
-      outputs: []
-    };
-
-    // template 추가
-    appJson.template = template;
-
-    // componentName으로 디렉토리 생성
-    const componentPath = path.join(appPath, id);
+    // componentPath 디렉토리 생성
     fs.mkdirSync(componentPath, { recursive: true });
 
     // app.json 저장
@@ -1831,6 +2139,7 @@ export class Component implements OnInit {
     );
 
     // view.html 또는 view.pug 생성
+    const templateType = getTemplateType(projectPath);
     const viewFileName = templateType === 'html' ? 'view.html' : 'view.pug';
     const viewTemplate = templateType === 'html'
       ? `<div>${title}</div>`
@@ -1944,29 +2253,48 @@ export class Component implements OnInit {
       }
 
       const srcPath = path.join(projectPath, 'src');
-      const targetPath = path.join(srcPath, categoryType);
-      if (!fs.existsSync(targetPath)) {
-        vscode.window.showErrorMessage(`No ${categorySelection.label.toLowerCase()} files found.`);
-        return;
-      }
 
-      // 모든 파일 목록 가져오기
+      // 기본 및 portal framework 디렉토리들에서 모든 파일 목록 가져오기
       const files = [];
-      try {
-        const entries = fs.readdirSync(targetPath, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isFile() && entry.name.endsWith('.py')) {
-            files.push({
-              label: entry.name,
-              description: entry.name,
-              filePath: path.join(targetPath, entry.name)
-            });
+
+      // 1) 기본 src/controller 또는 src/model
+      const targetPath = path.join(srcPath, categoryType);
+      const pushFilesFromDir = (baseDir, prefix = '') => {
+        if (!fs.existsSync(baseDir)) return;
+        try {
+          const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && entry.name.endsWith('.py')) {
+              files.push({
+                label: `${prefix}${entry.name}`,
+                description: entry.name,
+                filePath: path.join(baseDir, entry.name)
+              });
+            }
           }
+        } catch (error) {
+          console.error(`Error reading ${baseDir}:`, error);
         }
-      } catch (error) {
-        console.error(`Error reading ${targetPath}:`, error);
-        vscode.window.showErrorMessage(`Failed to read directory: ${error.message}`);
-        return;
+      };
+
+      pushFilesFromDir(targetPath);
+
+      // 2) portal framework: src/portal/[module]/controller or /model
+      const portalRoot = path.join(srcPath, 'portal');
+      if (fs.existsSync(portalRoot)) {
+        try {
+          const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+          for (const portalEntry of portalEntries) {
+            if (!portalEntry.isDirectory() || portalEntry.name.startsWith('__')) continue;
+            const moduleName = portalEntry.name;
+            const modulePath = path.join(portalRoot, moduleName);
+            const portalDir = path.join(modulePath, categoryType);
+            const prefix = `[${moduleName}] `;
+            pushFilesFromDir(portalDir, prefix);
+          }
+        } catch (e) {
+          console.error('Error reading portal root for deleteControllerModel:', e);
+        }
       }
 
       if (files.length === 0) {
@@ -2050,11 +2378,55 @@ export class Component implements OnInit {
       }
     }
     const srcPath = path.join(projectPath, 'src');
-    const controllerPath = path.join(srcPath, 'controller');
+
+    // 생성 위치 선택 (default 또는 portal framework)
+    let controllerBasePath = path.join(srcPath, 'controller');
+    const locations = [];
+
+    locations.push({
+      label: 'Default controller (src/controller)',
+      description: path.relative(projectPath, controllerBasePath),
+      basePath: controllerBasePath
+    });
+
+    const portalRoot = path.join(srcPath, 'portal');
+    if (fs.existsSync(portalRoot)) {
+      try {
+        const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+        for (const entry of portalEntries) {
+          if (!entry.isDirectory() || entry.name.startsWith('__')) continue;
+          const moduleName = entry.name;
+          const modulePath = path.join(portalRoot, moduleName);
+          const portalControllerPath = path.join(modulePath, 'controller');
+          if (fs.existsSync(portalControllerPath)) {
+            locations.push({
+              label: `[${moduleName}] controller (portal/${moduleName}/controller)`,
+              description: path.relative(projectPath, portalControllerPath),
+              basePath: portalControllerPath
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[wiz-extension] Failed to read portal controller directories:', e);
+      }
+    }
+
+    if (locations.length > 1) {
+      const selectedLocation = await vscode.window.showQuickPick(locations, {
+        placeHolder: 'Select where to create the controller (default or portal module)',
+        ignoreFocusOut: true
+      });
+
+      if (!selectedLocation) {
+        return;
+      }
+
+      controllerBasePath = selectedLocation.basePath;
+    }
 
     // controller 디렉토리가 없으면 생성
-    if (!fs.existsSync(controllerPath)) {
-      fs.mkdirSync(controllerPath, { recursive: true });
+    if (!fs.existsSync(controllerBasePath)) {
+      fs.mkdirSync(controllerBasePath, { recursive: true });
     }
 
     // 파일 이름 입력
@@ -2070,9 +2442,9 @@ export class Component implements OnInit {
         if (!nameWithoutExt.match(/^[a-zA-Z0-9._-]+$/)) {
           return 'Name can only contain letters, numbers, dots, underscores, and hyphens';
         }
-        // .py 확장자 자동 추가
+        // .py 확장자를 자동으로 추가
         const fileName = value.endsWith('.py') ? value : `${value}.py`;
-        const filePath = path.join(controllerPath, fileName);
+        const filePath = path.join(controllerBasePath, fileName);
         if (fs.existsSync(filePath)) {
           return 'File already exists';
         }
@@ -2088,7 +2460,7 @@ export class Component implements OnInit {
     const fileName = inputName.endsWith('.py') ? inputName : `${inputName}.py`;
 
     try {
-      const filePath = path.join(controllerPath, fileName);
+      const filePath = path.join(controllerBasePath, fileName);
       fs.writeFileSync(filePath, '', 'utf8');
 
       // Tree View 새로고침
@@ -2126,11 +2498,55 @@ export class Component implements OnInit {
       }
     }
     const srcPath = path.join(projectPath, 'src');
-    const modelPath = path.join(srcPath, 'model');
+
+    // 생성 위치 선택 (default 또는 portal framework)
+    let modelBasePath = path.join(srcPath, 'model');
+    const locations = [];
+
+    locations.push({
+      label: 'Default model (src/model)',
+      description: path.relative(projectPath, modelBasePath),
+      basePath: modelBasePath
+    });
+
+    const portalRoot = path.join(srcPath, 'portal');
+    if (fs.existsSync(portalRoot)) {
+      try {
+        const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+        for (const entry of portalEntries) {
+          if (!entry.isDirectory() || entry.name.startsWith('__')) continue;
+          const moduleName = entry.name;
+          const modulePath = path.join(portalRoot, moduleName);
+          const portalModelPath = path.join(modulePath, 'model');
+          if (fs.existsSync(portalModelPath)) {
+            locations.push({
+              label: `[${moduleName}] model (portal/${moduleName}/model)`,
+              description: path.relative(projectPath, portalModelPath),
+              basePath: portalModelPath
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[wiz-extension] Failed to read portal model directories:', e);
+      }
+    }
+
+    if (locations.length > 1) {
+      const selectedLocation = await vscode.window.showQuickPick(locations, {
+        placeHolder: 'Select where to create the model (default or portal module)',
+        ignoreFocusOut: true
+      });
+
+      if (!selectedLocation) {
+        return;
+      }
+
+      modelBasePath = selectedLocation.basePath;
+    }
 
     // model 디렉토리가 없으면 생성
-    if (!fs.existsSync(modelPath)) {
-      fs.mkdirSync(modelPath, { recursive: true });
+    if (!fs.existsSync(modelBasePath)) {
+      fs.mkdirSync(modelBasePath, { recursive: true });
     }
 
     // 파일 이름 입력
@@ -2148,7 +2564,7 @@ export class Component implements OnInit {
         }
         // .py 확장자 자동 추가
         const fileName = value.endsWith('.py') ? value : `${value}.py`;
-        const filePath = path.join(modelPath, fileName);
+        const filePath = path.join(modelBasePath, fileName);
         if (fs.existsSync(filePath)) {
           return 'File already exists';
         }
@@ -2164,7 +2580,7 @@ export class Component implements OnInit {
     const fileName = inputName.endsWith('.py') ? inputName : `${inputName}.py`;
 
     try {
-      const filePath = path.join(modelPath, fileName);
+      const filePath = path.join(modelBasePath, fileName);
       fs.writeFileSync(filePath, '', 'utf8');
 
       // Tree View 새로고침
@@ -2202,7 +2618,56 @@ export class Component implements OnInit {
       }
     }
     const srcPath = path.join(projectPath, 'src');
-    const routePath = path.join(srcPath, 'route');
+
+    // 생성 위치 선택 (default 또는 portal framework)
+    let routeBasePath = path.join(srcPath, 'route');
+    const locations = [];
+
+    locations.push({
+      label: 'Default route (src/route)',
+      description: path.relative(projectPath, routeBasePath),
+      basePath: routeBasePath
+    });
+
+    const portalRoot = path.join(srcPath, 'portal');
+    if (fs.existsSync(portalRoot)) {
+      try {
+        const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+        for (const entry of portalEntries) {
+          if (!entry.isDirectory() || entry.name.startsWith('__')) continue;
+          const moduleName = entry.name;
+          const modulePath = path.join(portalRoot, moduleName);
+          const portalRoutePath = path.join(modulePath, 'route');
+          if (fs.existsSync(portalRoutePath)) {
+            locations.push({
+              label: `[${moduleName}] route (portal/${moduleName}/route)`,
+              description: path.relative(projectPath, portalRoutePath),
+              basePath: portalRoutePath
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[wiz-extension] Failed to read portal route directories:', e);
+      }
+    }
+
+    if (locations.length > 1) {
+      const selectedLocation = await vscode.window.showQuickPick(locations, {
+        placeHolder: 'Select where to create the route (default or portal module)',
+        ignoreFocusOut: true
+      });
+
+      if (!selectedLocation) {
+        return;
+      }
+
+      routeBasePath = selectedLocation.basePath;
+    }
+
+    // route 디렉토리가 없으면 생성
+    if (!fs.existsSync(routeBasePath)) {
+      fs.mkdirSync(routeBasePath, { recursive: true });
+    }
 
     // id 입력 (필수)
     const id = await vscode.window.showInputBox({
@@ -2215,7 +2680,7 @@ export class Component implements OnInit {
         if (!value.match(/^[a-z0-9.]+$/)) {
           return 'Id can only contain lowercase letters, numbers, and dots';
         }
-        const routeItemPath = path.join(routePath, value);
+        const routeItemPath = path.join(routeBasePath, value);
         if (fs.existsSync(routeItemPath)) {
           return 'Route already exists';
         }
@@ -2286,7 +2751,7 @@ export class Component implements OnInit {
     }
 
     try {
-      const routeItemPath = path.join(routePath, id);
+      const routeItemPath = path.join(routeBasePath, id);
       fs.mkdirSync(routeItemPath, { recursive: true });
 
       // app.json 생성
@@ -2360,14 +2825,9 @@ export class Component implements OnInit {
       }
 
       const srcPath = path.join(projectPath, 'src');
-      const assetsPath = path.join(srcPath, 'assets');
-      if (!fs.existsSync(assetsPath)) {
-        vscode.window.showErrorMessage('No assets found.');
-        return;
-      }
 
-      // 모든 assets 목록 가져오기 (재귀적으로)
-      const getAllAssets = (dir, basePath) => {
+      // 모든 assets 목록 가져오기 (기본 + portal framework, 재귀적으로)
+      const getAllAssets = (dir, basePath, prefix = '') => {
         const items = [];
         try {
           const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -2379,16 +2839,16 @@ export class Component implements OnInit {
             const relativePath = path.relative(basePath, entryPath);
             if (entry.isDirectory()) {
               items.push({
-                label: entry.name,
-                description: `📁 ${relativePath}`,
+                label: `${prefix}${entry.name}`,
+                description: `📁 ${prefix}${relativePath}`,
                 filePath: entryPath
               });
               // 하위 항목도 추가
-              items.push(...getAllAssets(entryPath, basePath));
+              items.push(...getAllAssets(entryPath, basePath, prefix));
             } else {
               items.push({
-                label: entry.name,
-                description: `📄 ${relativePath}`,
+                label: `${prefix}${entry.name}`,
+                description: `📄 ${prefix}${relativePath}`,
                 filePath: entryPath
               });
             }
@@ -2399,7 +2859,33 @@ export class Component implements OnInit {
         return items;
       };
 
-      const assets = getAllAssets(assetsPath, assetsPath);
+      const assets = [];
+
+      // 1) 기본 src/assets
+      const assetsPath = path.join(srcPath, 'assets');
+      if (fs.existsSync(assetsPath)) {
+        assets.push(...getAllAssets(assetsPath, assetsPath));
+      }
+
+      // 2) portal framework: src/portal/[module]/assets
+      const portalRoot = path.join(srcPath, 'portal');
+      if (fs.existsSync(portalRoot)) {
+        try {
+          const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+          for (const portalEntry of portalEntries) {
+            if (!portalEntry.isDirectory() || portalEntry.name.startsWith('__')) continue;
+            const moduleName = portalEntry.name;
+            const modulePath = path.join(portalRoot, moduleName);
+            const portalAssetsPath = path.join(modulePath, 'assets');
+            if (fs.existsSync(portalAssetsPath)) {
+              const prefix = `[${moduleName}] `;
+              assets.push(...getAllAssets(portalAssetsPath, portalAssetsPath, prefix));
+            }
+          }
+        } catch (e) {
+          console.error('Error reading portal root for deleteAsset:', e);
+        }
+      }
 
       if (assets.length === 0) {
         vscode.window.showInformationMessage('No assets found.');
@@ -2597,11 +3083,54 @@ export class Component implements OnInit {
     }
 
     const srcPath = path.join(projectPath, 'src');
-    const assetsPath = path.join(srcPath, 'assets');
 
-    // assets 디렉토리가 없으면 생성
-    if (!fs.existsSync(assetsPath)) {
-      fs.mkdirSync(assetsPath, { recursive: true });
+    // 업로드 위치 선택 (default 또는 portal framework)
+    let assetsBasePath = path.join(srcPath, 'assets');
+    const locations = [];
+
+    locations.push({
+      label: 'Default assets (src/assets)',
+      description: path.relative(projectPath, assetsBasePath),
+      basePath: assetsBasePath
+    });
+
+    const portalRoot = path.join(srcPath, 'portal');
+    if (fs.existsSync(portalRoot)) {
+      try {
+        const portalEntries = fs.readdirSync(portalRoot, { withFileTypes: true });
+        for (const entry of portalEntries) {
+          if (!entry.isDirectory() || entry.name.startsWith('__')) continue;
+          const moduleName = entry.name;
+          const modulePath = path.join(portalRoot, moduleName);
+          const portalAssetsPath = path.join(modulePath, 'assets');
+          // assets 디렉토리가 존재하지 않아도 선택 시 생성할 수 있으므로, 모듈만 존재하면 표시
+          locations.push({
+            label: `[${moduleName}] assets (portal/${moduleName}/assets)`,
+            description: path.relative(projectPath, portalAssetsPath),
+            basePath: portalAssetsPath
+          });
+        }
+      } catch (e) {
+        console.error('[wiz-extension] Failed to read portal assets directories:', e);
+      }
+    }
+
+    if (locations.length > 1) {
+      const selectedLocation = await vscode.window.showQuickPick(locations, {
+        placeHolder: 'Select where to upload assets (default or portal module)',
+        ignoreFocusOut: true
+      });
+
+      if (!selectedLocation) {
+        return;
+      }
+
+      assetsBasePath = selectedLocation.basePath;
+    }
+
+    // 선택된 위치의 assets 디렉토리가 없으면 생성
+    if (!fs.existsSync(assetsBasePath)) {
+      fs.mkdirSync(assetsBasePath, { recursive: true });
     }
 
     try {
@@ -2617,11 +3146,11 @@ export class Component implements OnInit {
         return;
       }
 
-      // 각 파일을 assets 디렉토리에 복사
+      // 각 파일을 선택된 assets 디렉토리에 복사
       for (const uri of uris) {
         const sourcePath = uri.fsPath;
         const fileName = path.basename(sourcePath);
-        const targetPath = path.join(assetsPath, fileName);
+        const targetPath = path.join(assetsBasePath, fileName);
 
         // 중복 파일 확인
         if (fs.existsSync(targetPath)) {

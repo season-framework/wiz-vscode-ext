@@ -145,6 +145,178 @@ class CategoryTreeProvider {
         return Promise.resolve([]);
     }
 
+    // Portal framework 항목 가져오기 (공통 함수)
+    async getPortalItems(srcPath, categoryType) {
+        const items = [];
+        const portalPath = path.join(srcPath, 'portal');
+        
+        if (!fs.existsSync(portalPath)) {
+            return items;
+        }
+
+        try {
+            const portalEntries = fs.readdirSync(portalPath, { withFileTypes: true });
+            for (const portalEntry of portalEntries) {
+                if (portalEntry.isDirectory() && !portalEntry.name.startsWith('__')) {
+                    const moduleName = portalEntry.name;
+                    const modulePath = path.join(portalPath, moduleName);
+                    const prefix = `[${moduleName}]`;
+
+                    // Portal framework의 app/widget은 모두 component로만 취급
+                    if (categoryType === 'component') {
+                        // Portal app 구성요소들
+                        const appPath = path.join(modulePath, 'app');
+                        if (fs.existsSync(appPath)) {
+                            try {
+                                const entries = fs.readdirSync(appPath, { withFileTypes: true });
+                                for (const entry of entries) {
+                                    if (entry.isDirectory() && !entry.name.startsWith('__')) {
+                                        const componentPath = path.join(appPath, entry.name);
+                                        if (this.isAppComponent(componentPath)) {
+                                            const appJsonPath = path.join(componentPath, 'app.json');
+                                            let label = entry.name;
+
+                                            if (fs.existsSync(appJsonPath)) {
+                                                try {
+                                                    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                                                    const title = appJson.title || entry.name;
+                                                    label = title;
+                                                } catch (e) {
+                                                    // JSON 파싱 실패 시 기본 이름 사용
+                                                }
+                                            }
+
+                                            const isActive = this.activeComponentPath && 
+                                                path.normalize(this.activeComponentPath) === path.normalize(componentPath);
+
+                                            items.push(new AppComponent(entry.name, componentPath, `${prefix} ${label}`, isActive));
+                                        }
+                                    }
+                                }
+                            } catch (error) {
+                                console.error(`[${categoryType}] Error reading portal ${moduleName}/app:`, error);
+                            }
+                        }
+
+                        // Portal widget 구성요소들 (component와 동일하게 취급)
+                        const widgetPath = path.join(modulePath, 'widget');
+                        if (fs.existsSync(widgetPath)) {
+                            try {
+                                const entries = fs.readdirSync(widgetPath, { withFileTypes: true });
+                                for (const entry of entries) {
+                                    if (entry.isDirectory() && !entry.name.startsWith('__')) {
+                                        const componentPath = path.join(widgetPath, entry.name);
+                                        if (this.isAppComponent(componentPath)) {
+                                            const appJsonPath = path.join(componentPath, 'app.json');
+                                            let label = entry.name;
+
+                                            if (fs.existsSync(appJsonPath)) {
+                                                try {
+                                                    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                                                    const title = appJson.title || entry.name;
+                                                    label = title;
+                                                } catch (e) {
+                                                    // JSON 파싱 실패 시 기본 이름 사용
+                                                }
+                                            }
+
+                                            const isActive = this.activeComponentPath && 
+                                                path.normalize(this.activeComponentPath) === path.normalize(componentPath);
+
+                                            items.push(new AppComponent(entry.name, componentPath, `${prefix} ${label}`, isActive));
+                                        }
+                                    }
+                                }
+                            } catch (error) {
+                                console.error(`[${categoryType}] Error reading portal ${moduleName}/widget:`, error);
+                            }
+                        }
+                    } else if (categoryType === 'angular') {
+                        const angularPath = path.join(modulePath, 'angular');
+                        if (fs.existsSync(angularPath)) {
+                            const childItems = await this.getChildItems(angularPath);
+                            for (const item of childItems) {
+                                // CategoryItem의 name을 수정하여 label에 반영
+                                const originalName = item.name;
+                                item.name = `${prefix} ${originalName}`;
+                            }
+                            items.push(...childItems);
+                        }
+                    } else if (categoryType === 'assets') {
+                        const assetsPath = path.join(modulePath, 'assets');
+                        if (fs.existsSync(assetsPath)) {
+                            const childItems = await this.getChildItems(assetsPath);
+                            for (const item of childItems) {
+                                const originalName = item.name;
+                                item.name = `${prefix} ${originalName}`;
+                            }
+                            items.push(...childItems);
+                        }
+                    } else if (categoryType === 'controller') {
+                        const controllerPath = path.join(modulePath, 'controller');
+                        if (fs.existsSync(controllerPath)) {
+                            const childItems = await this.getChildItems(controllerPath);
+                            for (const item of childItems) {
+                                const originalName = item.name;
+                                item.name = `${prefix} ${originalName}`;
+                            }
+                            items.push(...childItems);
+                        }
+                    } else if (categoryType === 'model') {
+                        const modelPath = path.join(modulePath, 'model');
+                        if (fs.existsSync(modelPath)) {
+                            const childItems = await this.getChildItems(modelPath);
+                            for (const item of childItems) {
+                                const originalName = item.name;
+                                item.name = `${prefix} ${originalName}`;
+                            }
+                            items.push(...childItems);
+                        }
+                    } else if (categoryType === 'route') {
+                        const routePath = path.join(modulePath, 'route');
+                        if (fs.existsSync(routePath)) {
+                            try {
+                                const entries = fs.readdirSync(routePath, { withFileTypes: true });
+                                for (const entry of entries) {
+                                    if (entry.isDirectory()) {
+                                        const routeItemPath = path.join(routePath, entry.name);
+                                        const appJsonPath = path.join(routeItemPath, 'app.json');
+                                        const controllerPyPath = path.join(routeItemPath, 'controller.py');
+                                        
+                                        if (fs.existsSync(appJsonPath) || fs.existsSync(controllerPyPath)) {
+                                            let label = entry.name;
+                                            if (fs.existsSync(appJsonPath)) {
+                                                try {
+                                                    const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+                                                    const title = appJson.title || entry.name;
+                                                    const route = appJson.route || '';
+                                                    label = `${title}${route ? ` - ${route}` : ''}`;
+                                                } catch (e) {
+                                                    // JSON 파싱 실패 시 이름만 사용
+                                                }
+                                            }
+
+                                            const isActive = this.activeComponentPath && 
+                                                path.normalize(this.activeComponentPath) === path.normalize(routeItemPath);
+
+                                            items.push(new RouteItem(entry.name, routeItemPath, `${prefix} ${label}`, isActive));
+                                        }
+                                    }
+                                }
+                            } catch (error) {
+                                console.error(`[${categoryType}] Error reading portal ${moduleName}/route:`, error);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`[${categoryType}] Error reading portal directory:`, error);
+        }
+
+        return items;
+    }
+
     async getRootItems(srcPath) {
         const items = [];
         if (this.categoryType === 'page' || this.categoryType === 'component' || this.categoryType === 'layout') {
@@ -197,6 +369,10 @@ class CategoryTreeProvider {
                     console.error(`[${this.categoryType}] Error reading ${appPath}:`, error);
                 }
             }
+
+            // Portal framework 항목 추가
+            const portalItems = await this.getPortalItems(srcPath, this.categoryType);
+            items.push(...portalItems);
         } else if (this.categoryType === 'angular') {
             const angularPath = path.join(srcPath, 'angular');
             if (fs.existsSync(angularPath)) {
@@ -204,6 +380,9 @@ class CategoryTreeProvider {
                 const childItems = await this.getChildItems(angularPath);
                 items.push(...childItems);
             }
+            // Portal framework 항목 추가
+            const portalItems = await this.getPortalItems(srcPath, this.categoryType);
+            items.push(...portalItems);
         } else if (this.categoryType === 'assets') {
             const assetsPath = path.join(srcPath, 'assets');
             if (fs.existsSync(assetsPath)) {
@@ -211,6 +390,9 @@ class CategoryTreeProvider {
                 const childItems = await this.getChildItems(assetsPath);
                 items.push(...childItems);
             }
+            // Portal framework 항목 추가
+            const portalItems = await this.getPortalItems(srcPath, this.categoryType);
+            items.push(...portalItems);
         } else if (this.categoryType === 'controller') {
             const controllerPath = path.join(srcPath, 'controller');
             if (fs.existsSync(controllerPath)) {
@@ -218,6 +400,9 @@ class CategoryTreeProvider {
                 const childItems = await this.getChildItems(controllerPath);
                 items.push(...childItems);
             }
+            // Portal framework 항목 추가
+            const portalItems = await this.getPortalItems(srcPath, this.categoryType);
+            items.push(...portalItems);
         } else if (this.categoryType === 'model') {
             const modelPath = path.join(srcPath, 'model');
             if (fs.existsSync(modelPath)) {
@@ -225,6 +410,9 @@ class CategoryTreeProvider {
                 const childItems = await this.getChildItems(modelPath);
                 items.push(...childItems);
             }
+            // Portal framework 항목 추가
+            const portalItems = await this.getPortalItems(srcPath, this.categoryType);
+            items.push(...portalItems);
         } else if (this.categoryType === 'route') {
             // Route는 App처럼 디렉토리 단위로 묶어서 표시
             const routePath = path.join(srcPath, 'route');
@@ -265,6 +453,9 @@ class CategoryTreeProvider {
                     console.error(`[${this.categoryType}] Error reading route directory:`, error);
                 }
             }
+            // Portal framework 항목 추가
+            const portalItems = await this.getPortalItems(srcPath, this.categoryType);
+            items.push(...portalItems);
         }
 
         return Promise.resolve(items);

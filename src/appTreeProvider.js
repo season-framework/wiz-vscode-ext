@@ -257,6 +257,8 @@ class AppTreeProvider {
     /**
      * 파일 경로에서 구성요소 경로 찾기
      * 예: /path/to/project/main/src/app/page.main/view.html -> /path/to/project/main/src/app/page.main
+     * 예: /path/to/project/main/src/portal/module_name/app/component_name/view.html -> /path/to/project/main/src/portal/module_name/app/component_name
+     * 예: /path/to/project/main/src/portal/module_name/widget/component_name/view.html -> /path/to/project/main/src/portal/module_name/widget/component_name
      */
     findComponentPath(filePath) {
         const normalizedPath = path.normalize(filePath);
@@ -267,18 +269,40 @@ class AppTreeProvider {
             part === 'app' && index > 0 && parts[index - 1] === 'src'
         );
         
-        if (appIndex === -1) {
-            return null;
+        if (appIndex !== -1) {
+            // app 다음의 디렉토리가 구성요소
+            if (appIndex + 1 < parts.length) {
+                const componentName = parts[appIndex + 1];
+                const componentPath = parts.slice(0, appIndex + 2).join(path.sep);
+                
+                // 구성요소 디렉토리가 실제로 존재하는지 확인
+                if (fs.existsSync(componentPath) && fs.statSync(componentPath).isDirectory()) {
+                    return componentPath;
+                }
+            }
         }
 
-        // app 다음의 디렉토리가 구성요소
-        if (appIndex + 1 < parts.length) {
-            const componentName = parts[appIndex + 1];
-            const componentPath = parts.slice(0, appIndex + 2).join(path.sep);
-            
-            // 구성요소 디렉토리가 실제로 존재하는지 확인
-            if (fs.existsSync(componentPath) && fs.statSync(componentPath).isDirectory()) {
-                return componentPath;
+        // portal framework 패턴 찾기: src/portal/[module]/app/... 또는 src/portal/[module]/widget/...
+        const portalIndex = parts.findIndex((part, index) => 
+            part === 'portal' && index > 0 && parts[index - 1] === 'src'
+        );
+        
+        if (portalIndex !== -1) {
+            // portal 다음에 module_name이 있고, 그 다음에 app 또는 widget이 있어야 함
+            if (portalIndex + 3 < parts.length) {
+                const moduleName = parts[portalIndex + 1];
+                const portalType = parts[portalIndex + 2]; // 'app' or 'widget'
+                
+                if ((portalType === 'app' || portalType === 'widget') && moduleName) {
+                    // portal/[module]/app 또는 widget 다음의 디렉토리가 구성요소
+                    const componentName = parts[portalIndex + 3];
+                    const componentPath = parts.slice(0, portalIndex + 4).join(path.sep);
+                    
+                    // 구성요소 디렉토리가 실제로 존재하는지 확인
+                    if (fs.existsSync(componentPath) && fs.statSync(componentPath).isDirectory()) {
+                        return componentPath;
+                    }
+                }
             }
         }
 

@@ -103,284 +103,213 @@
     "commands": [
       {
         "command": "wiz-extension.openComponent",
-        "title": "WIZ: Open Component Files",
-        "icon": "$(file-code)",
-        "category": "WIZ"
+        "title": "Open Component Files",
+        "icon": "$(file-code)"
       },
       {
         "command": "wiz-extension.refresh",
-        "title": "WIZ: Refresh All Views",
+        "title": "Refresh All Views",
         "icon": "$(refresh)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.selectProject",
-        "title": "WIZ: Select Project",
+        "title": "Select Project",
         "icon": "$(check)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.focusView",
-        "title": "WIZ: Focus on WIZ Views",
-        "category": "WIZ"
+        "title": "Focus on WIZ Views"
       },
       {
         "command": "wiz-extension.showComponentInfo",
-        "title": "WIZ: Show Component Info",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewPug",
-        "title": "View",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewPugActive",
-        "title": "✔ View",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewHtml",
-        "title": "View",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewHtmlActive",
-        "title": "✔ View",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewTs",
-        "title": "Component",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewTsActive",
-        "title": "✔ Component",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewScss",
-        "title": "SCSS",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewScssActive",
-        "title": "✔ SCSS",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openApiPy",
-        "title": "API",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openApiPyActive",
-        "title": "✔ API",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openSocketPy",
-        "title": "Socket",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openSocketPyActive",
-        "title": "✔ Socket",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openAppJson",
-        "title": "Info",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openAppJsonActive",
-        "title": "✔ Info",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openRoute",
-        "title": "WIZ: Open Route",
-        "category": "WIZ"
+        "title": "Show Component Info"
       },
       {
         "command": "wiz-extension.deleteAppComponent",
-        "title": "WIZ: Delete App Component (Page/Component/Layout)",
+        "title": "Delete App Component (Page/Component/Layout)",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteRoute",
-        "title": "WIZ: Delete Server Route",
+        "title": "Delete Server Route",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addAppComponent",
-        "title": "WIZ: Add App Component",
-        "icon": "$(plus)",
-        "category": "WIZ"
+        "title": "Create App Component",
+        "icon": "$(plus)"
       },
       {
         "command": "wiz-extension.addPage",
-        "title": "WIZ: Add App Page",
+        "title": "Create App Page",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addComponent",
-        "title": "WIZ: Add App Component",
+        "title": "Create App Component",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addLayout",
-        "title": "WIZ: Add App Layout",
+        "title": "Create App Layout",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addRoute",
-        "title": "WIZ: Add Server Route",
+        "title": "Create Server Route",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteControllerModel",
-        "title": "WIZ: Delete Server Controller or Model",
+        "title": "Delete Server Controller or Model",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addController",
-        "title": "WIZ: Add Server Controller",
+        "title": "Create Server Controller",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.addModel",
-        "title": "WIZ: Add Server Model",
+        "title": "Create Server Model",
         "icon": "$(plus)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.deleteAsset",
-        "title": "WIZ: Delete Asset File or Folder",
+        "title": "Delete Asset File or Folder",
         "icon": "$(trash)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.downloadAsset",
-        "title": "WIZ: Download Asset File",
+        "title": "Download Asset File",
         "icon": "$(download)",
         "category": "WIZ"
       },
       {
         "command": "wiz-extension.uploadAsset",
-        "title": "WIZ: Upload Asset File",
+        "title": "Upload Asset File",
         "icon": "$(cloud-upload)",
         "category": "WIZ"
       },
       {
-        "command": "wiz-extension.openControllerPy",
-        "title": "Controller",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openControllerPyActive",
-        "title": "✔ Controller",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openRouteAppJson",
-        "title": "Info",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openRouteAppJsonActive",
-        "title": "✔ Info",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.createViewPug",
-        "title": "+ View",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.createViewHtml",
-        "title": "+ View",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.createViewTs",
-        "title": "+ Component",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.createViewScss",
-        "title": "+ SCSS",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.createApiPy",
-        "title": "+ API",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.createSocketPy",
-        "title": "+ Socket",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewPugCopyPath",
-        "title": "WIZ: Copy View (Pug) Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewHtmlCopyPath",
-        "title": "WIZ: Copy View (HTML) Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewTsCopyPath",
-        "title": "WIZ: Copy Component Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openViewScssCopyPath",
-        "title": "WIZ: Copy SCSS Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openApiPyCopyPath",
-        "title": "WIZ: Copy API Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openSocketPyCopyPath",
-        "title": "WIZ: Copy Socket Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
-        "command": "wiz-extension.openAppJsonCopyPath",
-        "title": "WIZ: Copy App Info Path to Clipboard",
-        "category": "WIZ"
-      },
-      {
         "command": "wiz-extension.navigatePrevious",
-        "title": "WIZ: Navigate to Previous File",
-        "category": "WIZ"
+        "title": "Navigate to Previous File"
       },
       {
         "command": "wiz-extension.navigateNext",
-        "title": "WIZ: Navigate to Next File",
-        "category": "WIZ"
+        "title": "Navigate to Next File"
       },
       {
         "command": "wiz-extension.openInSplit",
-        "title": "WIZ: Open Current File in Split View",
-        "category": "WIZ"
+        "title": "Open Current File in Split View"
+      },
+      {
+        "command": "wiz-extension.openAppJsonActive",
+        "title": "✔ Info"
+      },
+      {
+        "command": "wiz-extension.openAppJson",
+        "title": "Info"
+      },
+      {
+        "command": "wiz-extension.openViewPugActive",
+        "title": "✔ View"
+      },
+      {
+        "command": "wiz-extension.openViewPug",
+        "title": "View"
+      },
+      {
+        "command": "wiz-extension.createViewPug",
+        "title": "+ View"
+      },
+      {
+        "command": "wiz-extension.openViewHtmlActive",
+        "title": "✔ View"
+      },
+      {
+        "command": "wiz-extension.openViewHtml",
+        "title": "View"
+      },
+      {
+        "command": "wiz-extension.createViewHtml",
+        "title": "+ View"
+      },
+      {
+        "command": "wiz-extension.openViewTsActive",
+        "title": "✔ Component"
+      },
+      {
+        "command": "wiz-extension.openViewTs",
+        "title": "Component"
+      },
+      {
+        "command": "wiz-extension.createViewTs",
+        "title": "+ Component"
+      },
+      {
+        "command": "wiz-extension.openViewScssActive",
+        "title": "✔ SCSS"
+      },
+      {
+        "command": "wiz-extension.openViewScss",
+        "title": "SCSS"
+      },
+      {
+        "command": "wiz-extension.createViewScss",
+        "title": "+ SCSS"
+      },
+      {
+        "command": "wiz-extension.openApiPyActive",
+        "title": "✔ API"
+      },
+      {
+        "command": "wiz-extension.openApiPy",
+        "title": "API"
+      },
+      {
+        "command": "wiz-extension.createApiPy",
+        "title": "+ API"
+      },
+      {
+        "command": "wiz-extension.openSocketPyActive",
+        "title": "✔ Socket"
+      },
+      {
+        "command": "wiz-extension.openSocketPy",
+        "title": "Socket"
+      },
+      {
+        "command": "wiz-extension.createSocketPy",
+        "title": "+ Socket"
+      },
+      {
+        "command": "wiz-extension.openRouteAppJsonActive",
+        "title": "✔ Info"
+      },
+      {
+        "command": "wiz-extension.openRouteAppJson",
+        "title": "Info"
+      },
+      {
+        "command": "wiz-extension.openControllerPyActive",
+        "title": "✔ Controller"
+      },
+      {
+        "command": "wiz-extension.openControllerPy",
+        "title": "Controller"
       }
     ],
     "keybindings": [
@@ -506,121 +435,145 @@
       "editor/title": [
         {
           "command": "wiz-extension.openAppJsonActive",
+          "title": "✔ Info",
           "when": "wiz.hasComponent && !wiz.hasRoute && wiz.hasappjson && wiz.activeappjson && wiz.buttonInfo && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@1"
         },
         {
           "command": "wiz-extension.openAppJson",
+          "title": "Info",
           "when": "wiz.hasComponent && !wiz.hasRoute && wiz.hasappjson && !wiz.activeappjson && wiz.buttonInfo && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@1"
         },
         {
           "command": "wiz-extension.openViewPugActive",
+          "title": "✔ View",
           "when": "wiz.hasComponent && wiz.hasviewpug && wiz.activeviewpug && wiz.buttonView && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.openViewPug",
+          "title": "View",
           "when": "wiz.hasComponent && wiz.hasviewpug && !wiz.activeviewpug && wiz.buttonView && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.createViewPug",
+          "title": "+ View",
           "when": "wiz.hasComponent && wiz.missingviewpug && !wiz.hasviewhtml && wiz.buttonView && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.openViewHtmlActive",
+          "title": "✔ View",
           "when": "wiz.hasComponent && wiz.hasviewhtml && !wiz.hasviewpug && wiz.activeviewhtml && wiz.buttonView && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.openViewHtml",
+          "title": "View",
           "when": "wiz.hasComponent && wiz.hasviewhtml && !wiz.hasviewpug && !wiz.activeviewhtml && wiz.buttonView && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.createViewHtml",
+          "title": "+ View",
           "when": "wiz.hasComponent && wiz.missingviewhtml && !wiz.hasviewpug && wiz.buttonView && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.openViewTsActive",
+          "title": "✔ Component",
           "when": "wiz.hasComponent && wiz.hasviewts && wiz.activeviewts && wiz.buttonComponent && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@3"
         },
         {
           "command": "wiz-extension.openViewTs",
+          "title": "Component",
           "when": "wiz.hasComponent && wiz.hasviewts && !wiz.activeviewts && wiz.buttonComponent && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@3"
         },
         {
           "command": "wiz-extension.createViewTs",
+          "title": "+ Component",
           "when": "wiz.hasComponent && wiz.missingviewts && wiz.buttonComponent && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@3"
         },
         {
           "command": "wiz-extension.openViewScssActive",
+          "title": "✔ SCSS",
           "when": "wiz.hasComponent && wiz.hasviewscss && wiz.activeviewscss && wiz.buttonScss && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@4"
         },
         {
           "command": "wiz-extension.openViewScss",
+          "title": "SCSS",
           "when": "wiz.hasComponent && wiz.hasviewscss && !wiz.activeviewscss && wiz.buttonScss && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@4"
         },
         {
           "command": "wiz-extension.createViewScss",
+          "title": "+ SCSS",
           "when": "wiz.hasComponent && wiz.missingviewscss && wiz.buttonScss && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@4"
         },
         {
           "command": "wiz-extension.openApiPyActive",
+          "title": "✔ API",
           "when": "wiz.hasComponent && wiz.hasapipy && wiz.activeapipy && wiz.buttonApi && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@5"
         },
         {
           "command": "wiz-extension.openApiPy",
+          "title": "API",
           "when": "wiz.hasComponent && wiz.hasapipy && !wiz.activeapipy && wiz.buttonApi && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@5"
         },
         {
           "command": "wiz-extension.createApiPy",
+          "title": "+ API",
           "when": "wiz.hasComponent && wiz.missingapipy && wiz.buttonApi && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@5"
         },
         {
           "command": "wiz-extension.openSocketPyActive",
+          "title": "✔ Socket",
           "when": "wiz.hasComponent && wiz.hassocketpy && wiz.activesocketpy && wiz.buttonSocket && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@6"
         },
         {
           "command": "wiz-extension.openSocketPy",
+          "title": "Socket",
           "when": "wiz.hasComponent && wiz.hassocketpy && !wiz.activesocketpy && wiz.buttonSocket && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@6"
         },
         {
           "command": "wiz-extension.createSocketPy",
+          "title": "+ Socket",
           "when": "wiz.hasComponent && wiz.missingsocketpy && wiz.buttonSocket && (resourceLangId == html || resourceLangId == pug || resourceLangId == typescript || resourceLangId == scss || resourceLangId == python || resourceLangId == json)",
           "group": "navigation@6"
         },
         {
           "command": "wiz-extension.openRouteAppJsonActive",
+          "title": "✔ Info",
           "when": "wiz.hasRoute && wiz.hasappjson && wiz.activeappjson && wiz.buttonInfo && (resourceLangId == python || resourceLangId == json)",
           "group": "navigation@1"
         },
         {
           "command": "wiz-extension.openRouteAppJson",
+          "title": "Info",
           "when": "wiz.hasRoute && wiz.hasappjson && !wiz.activeappjson && wiz.buttonInfo && (resourceLangId == python || resourceLangId == json)",
           "group": "navigation@1"
         },
         {
           "command": "wiz-extension.openControllerPyActive",
+          "title": "✔ Controller",
           "when": "wiz.hasRoute && wiz.hascontrollerpy && wiz.activecontrollerpy && (resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         },
         {
           "command": "wiz-extension.openControllerPy",
+          "title": "Controller",
           "when": "wiz.hasRoute && wiz.hascontrollerpy && !wiz.activecontrollerpy && (resourceLangId == python || resourceLangId == json)",
           "group": "navigation@2"
         }
