@@ -149,7 +149,6 @@ Extension의 manifest 파일입니다.
 ## Todo
 
 - Create Project
-- Create Portal Framework
 
 ## 참고 자료
 

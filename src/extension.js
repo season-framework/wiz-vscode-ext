@@ -2063,6 +2063,16 @@ export class Component implements OnInit {
         }
       });
 
+      // portal framework인 경우 portal.json 업데이트
+      if (folderPath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(folderPath)));
+        const projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (projectPath) {
+          const portalModulePath = path.join(projectPath, 'src', 'portal', moduleName);
+          updatePortalJson(portalModulePath);
+        }
+      }
+
       vscode.window.showInformationMessage(`"${componentName}" has been deleted.`);
     } catch (error) {
       console.error(`Failed to delete ${folderPath}:`, error);
@@ -2232,6 +2242,16 @@ export class Component implements OnInit {
         categoryTreeProviders['route'].refresh();
       }
 
+      // portal framework인 경우 portal.json 업데이트
+      if (folderPath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(folderPath)));
+        const projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (projectPath) {
+          const portalModulePath = path.join(projectPath, 'src', 'portal', moduleName);
+          updatePortalJson(portalModulePath);
+        }
+      }
+
       vscode.window.showInformationMessage(`Route "${routeName}" has been deleted.`);
     } catch (error) {
       console.error(`Failed to delete ${folderPath}:`, error);
@@ -2342,28 +2362,24 @@ export class Component implements OnInit {
             const modulePath = path.join(portalRoot, moduleName);
 
             const portalAppPath = path.join(modulePath, 'app');
-            if (fs.existsSync(portalAppPath)) {
-              locations.push({
-                label: `[${moduleName}] app (portal/${moduleName}/app)`,
-                description: path.relative(projectPath, portalAppPath),
-                basePath: portalAppPath,
-                isPortal: true,
-                portalType: 'app',
-                portalModuleName: moduleName
-              });
-            }
+            locations.push({
+              label: `[${moduleName}] app (portal/${moduleName}/app)`,
+              description: path.relative(projectPath, portalAppPath),
+              basePath: portalAppPath,
+              isPortal: true,
+              portalType: 'app',
+              portalModuleName: moduleName
+            });
 
             const portalWidgetPath = path.join(modulePath, 'widget');
-            if (fs.existsSync(portalWidgetPath)) {
-              locations.push({
-                label: `[${moduleName}] widget (portal/${moduleName}/widget)`,
-                description: path.relative(projectPath, portalWidgetPath),
-                basePath: portalWidgetPath,
-                isPortal: true,
-                portalType: 'widget',
-                portalModuleName: moduleName
-              });
-            }
+            locations.push({
+              label: `[${moduleName}] widget (portal/${moduleName}/widget)`,
+              description: path.relative(projectPath, portalWidgetPath),
+              basePath: portalWidgetPath,
+              isPortal: true,
+              portalType: 'widget',
+              portalModuleName: moduleName
+            });
           }
         } catch (e) {
           console.error('[wiz-extension] Failed to read portal directory:', e);
@@ -2387,6 +2403,11 @@ export class Component implements OnInit {
         portalType = selectedLocation.portalType || null;
         portalModuleName = selectedLocation.portalModuleName || null;
       }
+    }
+
+    // portal framework인 경우 디렉토리가 없으면 생성
+    if (isPortal && appBasePath && !fs.existsSync(appBasePath)) {
+      fs.mkdirSync(appBasePath, { recursive: true });
     }
 
     // namespace 입력 (필수)
@@ -2678,8 +2699,145 @@ export class Component implements OnInit {
       categoryTreeProviders[categoryType].refresh();
     }
 
+    // portal framework인 경우 portal.json 업데이트 (컨텐츠 생성 후)
+    if (isPortal && portalModuleName) {
+      const portalModulePath = path.join(srcPath, 'portal', portalModuleName);
+      updatePortalJson(portalModulePath);
+    }
+
     vscode.window.showInformationMessage(`${categoryName} "${id}" has been created.`);
   };
+
+  // portal.json 업데이트 함수
+  const updatePortalJson = (modulePath) => {
+    const portalJsonPath = path.join(modulePath, 'portal.json');
+    
+    // portal.json이 없으면 생성
+    let portalJson = {
+      package: path.basename(modulePath),
+      use_widget: false,
+      use_app: false,
+      use_route: false,
+      use_libs: false,
+      use_styles: false,
+      use_assets: false,
+      use_controller: false,
+      use_model: false
+    };
+
+    if (fs.existsSync(portalJsonPath)) {
+      try {
+        portalJson = JSON.parse(fs.readFileSync(portalJsonPath, 'utf8'));
+      } catch (e) {
+        console.error('[wiz-extension] Failed to parse portal.json:', e);
+      }
+    }
+
+    // 각 type에 대해 디렉토리 체크
+    const types = ['widget', 'app', 'route', 'libs', 'styles', 'assets', 'controller', 'model'];
+    
+    for (const type of types) {
+      const typePath = path.join(modulePath, type);
+      let hasContent = false;
+      
+      if (fs.existsSync(typePath)) {
+        try {
+          const entries = fs.readdirSync(typePath, { withFileTypes: true });
+          // 파일이나 디렉토리가 하나라도 있으면 true
+          hasContent = entries.length > 0;
+        } catch (e) {
+          // 에러 무시
+        }
+      }
+      
+      portalJson[`use_${type}`] = hasContent;
+    }
+
+    // portal.json 저장
+    try {
+      fs.writeFileSync(portalJsonPath, JSON.stringify(portalJson, null, 2), 'utf8');
+    } catch (e) {
+      console.error('[wiz-extension] Failed to write portal.json:', e);
+    }
+  };
+
+  // Portal Framework 생성 명령어
+  let createPortalFrameworkCommand = vscode.commands.registerCommand('wiz-extension.createPortalFramework', async () => {
+    // 프로젝트가 선택되지 않았으면 자동 선택 시도
+    let projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+    if (!projectPath) {
+      await vscode.commands.executeCommand('wiz-extension.selectProject');
+      projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+      if (!projectPath) {
+        vscode.window.showErrorMessage('Please select a project first.');
+        return;
+      }
+    }
+
+    const srcPath = path.join(projectPath, 'src');
+    const portalPath = path.join(srcPath, 'portal');
+
+    // portal framework 이름 입력 (영어 소문자만 허용)
+    const moduleName = await vscode.window.showInputBox({
+      prompt: 'Enter portal framework name (lowercase letters only)',
+      placeHolder: 'example',
+      validateInput: (value) => {
+        if (!value || value.trim().length === 0) {
+          return 'Name cannot be empty';
+        }
+        if (!value.match(/^[a-z]+$/)) {
+          return 'Name can only contain lowercase letters';
+        }
+        const modulePath = path.join(portalPath, value);
+        if (fs.existsSync(modulePath)) {
+          return 'Portal framework already exists';
+        }
+        return null;
+      }
+    });
+
+    if (!moduleName) {
+      return;
+    }
+
+    try {
+      const modulePath = path.join(portalPath, moduleName);
+      
+      // 디렉토리 생성
+      fs.mkdirSync(modulePath, { recursive: true });
+
+      // portal.json 생성
+      const portalJson = {
+        package: moduleName,
+        use_widget: false,
+        use_app: false,
+        use_route: false,
+        use_libs: false,
+        use_styles: false,
+        use_assets: false,
+        use_controller: false,
+        use_model: false
+      };
+
+      fs.writeFileSync(
+        path.join(modulePath, 'portal.json'),
+        JSON.stringify(portalJson, null, 2),
+        'utf8'
+      );
+
+      // Tree View 새로고침
+      Object.values(categoryTreeProviders).forEach(provider => {
+        if (provider) {
+          provider.refresh();
+        }
+      });
+
+      vscode.window.showInformationMessage(`Portal framework "${moduleName}" has been created.`);
+    } catch (error) {
+      console.error(`Failed to create portal framework:`, error);
+      vscode.window.showErrorMessage(`Failed to create portal framework: ${error.message}`);
+    }
+  });
 
   // 추가 명령어 (App Component: page, component, layout)
   let addAppComponentCommand = vscode.commands.registerCommand('wiz-extension.addAppComponent', async (categoryType) => {
@@ -2850,6 +3008,16 @@ export class Component implements OnInit {
         categoryTreeProviders[categoryType].refresh();
       }
 
+      // portal framework인 경우 portal.json 업데이트
+      if (filePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(filePath)));
+        const projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (projectPath) {
+          const portalModulePath = path.join(projectPath, 'src', 'portal', moduleName);
+          updatePortalJson(portalModulePath);
+        }
+      }
+
       vscode.window.showInformationMessage(`"${itemName}" has been deleted.`);
     } catch (error) {
       console.error(`Failed to delete ${filePath}:`, error);
@@ -2900,13 +3068,11 @@ export class Component implements OnInit {
           const moduleName = entry.name;
           const modulePath = path.join(portalRoot, moduleName);
           const portalControllerPath = path.join(modulePath, 'controller');
-          if (fs.existsSync(portalControllerPath)) {
-            locations.push({
-              label: `[${moduleName}] controller (portal/${moduleName}/controller)`,
-              description: path.relative(projectPath, portalControllerPath),
-              basePath: portalControllerPath
-            });
-          }
+          locations.push({
+            label: `[${moduleName}] controller (portal/${moduleName}/controller)`,
+            description: path.relative(projectPath, portalControllerPath),
+            basePath: portalControllerPath
+          });
         }
       } catch (e) {
         console.error('[wiz-extension] Failed to read portal controller directories:', e);
@@ -2970,6 +3136,13 @@ export class Component implements OnInit {
         categoryTreeProviders['controller'].refresh();
       }
 
+      // portal framework인 경우 portal.json 업데이트
+      if (controllerBasePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(controllerBasePath)));
+        const portalModulePath = path.join(path.dirname(path.dirname(path.dirname(controllerBasePath))), moduleName);
+        updatePortalJson(portalModulePath);
+      }
+
       vscode.window.showInformationMessage(`${categoryName} "${fileName}" has been created.`);
     } catch (error) {
       console.error(`Failed to create controller:`, error);
@@ -3020,13 +3193,11 @@ export class Component implements OnInit {
           const moduleName = entry.name;
           const modulePath = path.join(portalRoot, moduleName);
           const portalModelPath = path.join(modulePath, 'model');
-          if (fs.existsSync(portalModelPath)) {
-            locations.push({
-              label: `[${moduleName}] model (portal/${moduleName}/model)`,
-              description: path.relative(projectPath, portalModelPath),
-              basePath: portalModelPath
-            });
-          }
+          locations.push({
+            label: `[${moduleName}] model (portal/${moduleName}/model)`,
+            description: path.relative(projectPath, portalModelPath),
+            basePath: portalModelPath
+          });
         }
       } catch (e) {
         console.error('[wiz-extension] Failed to read portal model directories:', e);
@@ -3049,6 +3220,12 @@ export class Component implements OnInit {
     // model 디렉토리가 없으면 생성
     if (!fs.existsSync(modelBasePath)) {
       fs.mkdirSync(modelBasePath, { recursive: true });
+      // portal framework인 경우 portal.json 업데이트
+      if (modelBasePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(modelBasePath)));
+        const portalModulePath = path.join(path.dirname(path.dirname(path.dirname(modelBasePath))), moduleName);
+        updatePortalJson(portalModulePath);
+      }
     }
 
     // 파일 이름 입력
@@ -3088,6 +3265,13 @@ export class Component implements OnInit {
       // Tree View 새로고침
       if (categoryTreeProviders['model']) {
         categoryTreeProviders['model'].refresh();
+      }
+
+      // portal framework인 경우 portal.json 업데이트
+      if (modelBasePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(modelBasePath)));
+        const portalModulePath = path.join(path.dirname(path.dirname(path.dirname(modelBasePath))), moduleName);
+        updatePortalJson(portalModulePath);
       }
 
       vscode.window.showInformationMessage(`${categoryName} "${fileName}" has been created.`);
@@ -3140,13 +3324,11 @@ export class Component implements OnInit {
           const moduleName = entry.name;
           const modulePath = path.join(portalRoot, moduleName);
           const portalRoutePath = path.join(modulePath, 'route');
-          if (fs.existsSync(portalRoutePath)) {
-            locations.push({
-              label: `[${moduleName}] route (portal/${moduleName}/route)`,
-              description: path.relative(projectPath, portalRoutePath),
-              basePath: portalRoutePath
-            });
-          }
+          locations.push({
+            label: `[${moduleName}] route (portal/${moduleName}/route)`,
+            description: path.relative(projectPath, portalRoutePath),
+            basePath: portalRoutePath
+          });
         }
       } catch (e) {
         console.error('[wiz-extension] Failed to read portal route directories:', e);
@@ -3285,6 +3467,13 @@ export class Component implements OnInit {
       // Tree View 새로고침
       if (categoryTreeProviders['route']) {
         categoryTreeProviders['route'].refresh();
+      }
+
+      // portal framework인 경우 portal.json 업데이트
+      if (routeBasePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(routeBasePath)));
+        const portalModulePath = path.join(path.dirname(path.dirname(path.dirname(routeBasePath))), moduleName);
+        updatePortalJson(portalModulePath);
       }
 
       vscode.window.showInformationMessage(`${categoryName} "${id}" has been created.`);
@@ -3435,6 +3624,16 @@ export class Component implements OnInit {
       // Tree View 새로고침
       if (categoryTreeProviders && categoryTreeProviders['assets']) {
         categoryTreeProviders['assets'].refresh();
+      }
+
+      // portal framework인 경우 portal.json 업데이트
+      if (filePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(filePath)));
+        const projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (projectPath) {
+          const portalModulePath = path.join(projectPath, 'src', 'portal', moduleName);
+          updatePortalJson(portalModulePath);
+        }
       }
 
       vscode.window.showInformationMessage(`"${itemName}" has been deleted.`);
@@ -3605,7 +3804,6 @@ export class Component implements OnInit {
           const moduleName = entry.name;
           const modulePath = path.join(portalRoot, moduleName);
           const portalAssetsPath = path.join(modulePath, 'assets');
-          // assets 디렉토리가 존재하지 않아도 선택 시 생성할 수 있으므로, 모듈만 존재하면 표시
           locations.push({
             label: `[${moduleName}] assets (portal/${moduleName}/assets)`,
             description: path.relative(projectPath, portalAssetsPath),
@@ -3676,6 +3874,13 @@ export class Component implements OnInit {
         categoryTreeProviders['assets'].refresh();
       }
 
+      // portal framework인 경우 portal.json 업데이트
+      if (assetsBasePath.includes('/portal/')) {
+        const moduleName = path.basename(path.dirname(path.dirname(assetsBasePath)));
+        const portalModulePath = path.join(path.dirname(path.dirname(path.dirname(assetsBasePath))), moduleName);
+        updatePortalJson(portalModulePath);
+      }
+
       vscode.window.showInformationMessage(`${uris.length} file(s) uploaded successfully.`);
     } catch (error) {
       console.error(`Failed to upload files:`, error);
@@ -3714,6 +3919,7 @@ export class Component implements OnInit {
     deleteAssetCommand,
     downloadAssetCommand,
     uploadAssetCommand,
+    createPortalFrameworkCommand,
     workspaceWatcher,
     activeEditorWatcherWithFileTypes,
     configWatcher,

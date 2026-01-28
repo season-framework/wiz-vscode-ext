@@ -8,6 +8,13 @@
 - **Select Project** (`wiz-extension.selectProject`)  
   `project/*` 디렉토리에서 프로젝트 목록을 가져와 Quick Pick으로 선택합니다. 선택된 프로젝트는 상태바에 표시되고, 이후 모든 WIZ 기능의 기준이 됩니다.
 
+## Create Portal Framework
+
+- **Create Portal Framework** (`wiz-extension.createPortalFramework`)  
+  `src/portal` 아래에 Portal Framework 디렉토리를 생성합니다.  
+  `module` 이름을 입력받아 `portal.json`을 생성합니다.
+  구성 요소에 따라 `use_{type}` 필드를 자동으로 구성(true/false)합니다.
+
 ## App / Portal Components
 
 - **Create App Page** (`wiz-extension.addPage`)  

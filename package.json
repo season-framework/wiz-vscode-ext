@@ -204,6 +204,12 @@
         "category": "WIZ"
       },
       {
+        "command": "wiz-extension.createPortalFramework",
+        "title": "Create Portal Framework",
+        "icon": "$(plus)",
+        "category": "WIZ"
+      },
+      {
         "command": "wiz-extension.navigatePrevious",
         "title": "Navigate to Previous File"
       },
