@@ -138,13 +138,18 @@ Extension의 manifest 파일입니다.
 ### 파일 자동 열기 순서
 
 구성요소를 클릭하면 다음 순서로 파일이 열립니다:
-1. `view.html`
+1. `view.html` (`view.pug`)
 2. `view.ts`
 3. `view.scss`
 4. `api.py`
 5. `socket.py`
 6. `app.json`
 7. 기타 파일들
+
+## Todo
+
+- Create Project
+- Create Portal Framework
 
 ## 참고 자료
 

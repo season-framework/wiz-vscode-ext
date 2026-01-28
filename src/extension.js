@@ -655,6 +655,478 @@ export class Component implements OnInit {
     });
   };
 
+  // app.json 웹뷰 편집기 생성
+  const createAppJsonWebView = (componentPath, routePath, projectPath) => {
+    // 타입 판별
+    let type = null;
+    let appJsonPath = null;
+    let currentData = {};
+    let isPortal = false;
+    let portalModuleName = null;
+    let portalType = null; // 'app' or 'widget'
+
+    if (routePath) {
+      // Route인 경우
+      appJsonPath = path.join(routePath, 'app.json');
+      if (fs.existsSync(appJsonPath)) {
+        try {
+          currentData = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+        } catch (e) {
+          // JSON 파싱 실패 시 빈 객체
+        }
+      }
+      
+      // portal route인지 확인
+      if (routePath.includes('/portal/')) {
+        const parts = routePath.split(path.sep);
+        const portalIndex = parts.findIndex(p => p === 'portal');
+        if (portalIndex !== -1 && portalIndex + 1 < parts.length) {
+          isPortal = true;
+          portalModuleName = parts[portalIndex + 1];
+          type = 'portal.route';
+        } else {
+          type = 'route';
+        }
+      } else {
+        type = 'route';
+      }
+    } else if (componentPath) {
+      // App Component인 경우
+      appJsonPath = path.join(componentPath, 'app.json');
+      if (fs.existsSync(appJsonPath)) {
+        try {
+          currentData = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+        } catch (e) {
+          // JSON 파싱 실패 시 빈 객체
+        }
+      }
+
+      // portal인지 확인
+      if (componentPath.includes('/portal/')) {
+        const parts = componentPath.split(path.sep);
+        const portalIndex = parts.findIndex(p => p === 'portal');
+        if (portalIndex !== -1 && portalIndex + 1 < parts.length) {
+          isPortal = true;
+          portalModuleName = parts[portalIndex + 1];
+          const portalTypeIndex = portalIndex + 2;
+          if (portalTypeIndex < parts.length) {
+            const dirName = parts[portalTypeIndex];
+            if (dirName === 'app') {
+              portalType = 'app';
+              type = 'portal.component';
+            } else if (dirName === 'widget') {
+              portalType = 'widget';
+              type = 'portal.widget';
+            }
+          }
+        }
+      } else {
+        // 일반 app component
+        if (currentData.mode === 'page') {
+          type = 'page';
+        } else if (currentData.mode === 'component') {
+          type = 'component';
+        } else if (currentData.mode === 'layout') {
+          type = 'layout';
+        }
+      }
+    }
+
+    if (!type) {
+      vscode.window.showErrorMessage('Unable to determine component type');
+      return;
+    }
+
+    const panel = vscode.window.createWebviewPanel(
+      'wizAppJsonEditor',
+      `Edit ${type === 'page' ? 'Page' : type === 'component' ? 'Component' : type === 'layout' ? 'Layout' : type === 'route' ? 'Route' : type === 'portal.component' ? 'Portal App' : 'Portal Widget'} Info`,
+      vscode.ViewColumn.Beside,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true
+      }
+    );
+
+    // 웹뷰 HTML 생성
+    const webviewContent = generateAppJsonWebViewHTML(type, currentData, isPortal, portalModuleName, portalType, projectPath);
+    panel.webview.html = webviewContent;
+
+    // 메시지 핸들러
+    panel.webview.onDidReceiveMessage(
+      async (message) => {
+        switch (message.command) {
+          case 'save':
+            try {
+              // 데이터 검증 및 변환
+              const updatedData = message.data;
+              
+              // app.json 저장
+              fs.writeFileSync(appJsonPath, JSON.stringify(updatedData, null, 2), 'utf8');
+              
+              // Tree View 새로고침
+              if (appTreeProvider) {
+                appTreeProvider.refresh();
+              }
+              Object.values(categoryTreeProviders).forEach(provider => {
+                if (provider) {
+                  provider.refresh();
+                }
+              });
+
+              vscode.window.showInformationMessage('App.json has been saved.');
+              panel.dispose();
+            } catch (error) {
+              vscode.window.showErrorMessage(`Failed to save: ${error.message}`);
+            }
+            return;
+          case 'cancel':
+            panel.dispose();
+            return;
+        }
+      },
+      null,
+      context.subscriptions
+    );
+  };
+
+  // 웹뷰 HTML 생성 함수
+  const generateAppJsonWebViewHTML = (type, currentData, isPortal, portalModuleName, portalType, projectPath) => {
+    // 템플릿에 따라 필드 정의
+    let fields = [];
+    
+    if (type === 'page') {
+      fields = [
+        { key: 'namespace', label: 'Namespace', type: 'text', required: true, pattern: '^[a-z0-9.]+$', placeholder: 'main' },
+        { key: 'title', label: 'Title', type: 'text', required: false, placeholder: 'Main Page' },
+        { key: 'viewuri', label: 'View URI', type: 'text', required: true, placeholder: '/main/:id?' },
+        { key: 'layout', label: 'Layout', type: 'select', required: true, options: [] },
+        { key: 'controller', label: 'Controller', type: 'select', required: false, options: [] }
+      ];
+    } else if (type === 'component') {
+      fields = [
+        { key: 'namespace', label: 'Namespace', type: 'text', required: true, pattern: '^[a-z0-9.]+$', placeholder: 'card' },
+        { key: 'title', label: 'Title', type: 'text', required: false, placeholder: 'Card' },
+        { key: 'controller', label: 'Controller', type: 'select', required: false, options: [] }
+      ];
+    } else if (type === 'layout') {
+      fields = [
+        { key: 'namespace', label: 'Namespace', type: 'text', required: true, pattern: '^[a-z0-9.]+$', placeholder: 'navbar' },
+        { key: 'title', label: 'Title', type: 'text', required: false, placeholder: 'Navbar' },
+        { key: 'controller', label: 'Controller', type: 'select', required: false, options: [] }
+      ];
+    } else if (type === 'route' || type === 'portal.route') {
+      fields = [
+        { key: 'id', label: 'ID', type: 'text', required: true, pattern: '^[a-z0-9.]+$', placeholder: 'test' },
+        { key: 'title', label: 'Title', type: 'text', required: false, placeholder: 'Test' },
+        { key: 'route', label: 'Route', type: 'text', required: true, placeholder: '/test' },
+        { key: 'controller', label: 'Controller', type: 'select', required: false, options: [] }
+      ];
+    } else if (type === 'portal.component' || type === 'portal.widget') {
+      fields = [
+        { key: 'namespace', label: 'Namespace', type: 'text', required: true, pattern: '^[a-z0-9.]+$', placeholder: portalType === 'widget' ? 'test (widget. will be auto-added)' : 'test' },
+        { key: 'title', label: 'Title', type: 'text', required: false, placeholder: 'Test' },
+        { key: 'controller', label: 'Controller', type: 'select', required: false, options: [] }
+      ];
+    }
+
+    // Layout 목록 가져오기 (page인 경우)
+    if (type === 'page' && projectPath) {
+      const srcPath = path.join(projectPath, 'src');
+      const appPath = path.join(srcPath, 'app');
+      if (fs.existsSync(appPath)) {
+        try {
+          const entries = fs.readdirSync(appPath, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory() && entry.name.startsWith('layout.')) {
+              const layoutJsonPath = path.join(appPath, entry.name, 'app.json');
+              if (fs.existsSync(layoutJsonPath)) {
+                try {
+                  const layoutJson = JSON.parse(fs.readFileSync(layoutJsonPath, 'utf8'));
+                  const layoutField = fields.find(f => f.key === 'layout');
+                  if (layoutField) {
+                    layoutField.options.push({
+                      value: entry.name,
+                      label: `${entry.name} - ${layoutJson.title || entry.name}`
+                    });
+                  }
+                } catch (e) {
+                  // 무시
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // 무시
+        }
+      }
+    }
+
+    // Controller 목록 가져오기
+    if (projectPath) {
+      const srcPath = path.join(projectPath, 'src');
+      const controllerPath = path.join(srcPath, 'controller');
+      if (fs.existsSync(controllerPath)) {
+        try {
+          const entries = fs.readdirSync(controllerPath, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isFile() && entry.name.endsWith('.py')) {
+              const controllerName = entry.name.replace('.py', '');
+              fields.forEach(field => {
+                if (field.key === 'controller' && field.type === 'select') {
+                  field.options.push({
+                    value: controllerName,
+                    label: controllerName
+                  });
+                }
+              });
+            }
+          }
+        } catch (e) {
+          // 무시
+        }
+      }
+    }
+
+    // Controller 필드에 None 옵션 추가
+    fields.forEach(field => {
+      if (field.key === 'controller' && field.type === 'select') {
+        field.options.unshift({ value: '', label: '(None)' });
+      }
+    });
+
+    // HTML 생성
+    const fieldsHTML = fields.map(field => {
+      if (field.type === 'select') {
+        const optionsHTML = field.options.map(opt => 
+          `<option value="${opt.value}" ${currentData[field.key] === opt.value ? 'selected' : ''}>${opt.label}</option>`
+        ).join('');
+        return `
+          <div class="form-group">
+            <label for="${field.key}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+            <select id="${field.key}" name="${field.key}" ${field.required ? 'required' : ''}>
+              ${optionsHTML}
+            </select>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="form-group">
+            <label for="${field.key}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+            <input 
+              type="${field.type}" 
+              id="${field.key}" 
+              name="${field.key}" 
+              value="${(currentData[field.key] || '').replace(/"/g, '&quot;')}"
+              placeholder="${field.placeholder || ''}"
+              ${field.required ? 'required' : ''}
+              ${field.pattern ? `pattern="${field.pattern}"` : ''}
+            />
+          </div>
+        `;
+      }
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit App Info</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            padding: 20px;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+        h1 {
+            margin-bottom: 24px;
+            color: var(--vscode-textLink-foreground);
+            font-size: 20px;
+            font-weight: 600;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--vscode-input-border);
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--vscode-foreground);
+            letter-spacing: 0.3px;
+        }
+        .required {
+            color: var(--vscode-errorForeground);
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 2px solid var(--vscode-input-border, rgba(128, 128, 128, 0.5));
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: text;
+            box-shadow: 0 0 0 0 transparent;
+        }
+        input[type="text"]:hover {
+            border-color: var(--vscode-input-border, rgba(128, 128, 128, 0.7));
+            background: var(--vscode-input-background);
+            box-shadow: 0 0 0 1px var(--vscode-input-border, rgba(128, 128, 128, 0.3));
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder, #007acc);
+            box-shadow: 0 0 0 2px var(--vscode-focusBorder, rgba(0, 122, 204, 0.3));
+        }
+        select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: var(--vscode-input-background);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px 12px;
+            padding-right: 36px;
+            position: relative;
+        }
+        select:hover {
+            border-color: var(--vscode-input-border, rgba(128, 128, 128, 0.7));
+            background-color: var(--vscode-input-background);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23bbb' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            box-shadow: 0 0 0 1px var(--vscode-input-border, rgba(128, 128, 128, 0.3));
+        }
+        select:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder, #007acc);
+            background-color: var(--vscode-input-background);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23007acc' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            box-shadow: 0 0 0 2px var(--vscode-focusBorder, rgba(0, 122, 204, 0.3));
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+        .btn-primary {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: 1px solid var(--vscode-button-border, transparent);
+        }
+        .btn-primary:hover {
+            background: var(--vscode-button-hoverBackground);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: 1px solid var(--vscode-button-border, transparent);
+        }
+        .btn-secondary:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary:active {
+            transform: translateY(0);
+        }
+        .readonly-info {
+            background: var(--vscode-textBlockQuote-background);
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: var(--vscode-descriptionForeground);
+            border: 1px solid var(--vscode-input-border);
+        }
+        input[type="text"]:invalid:not(:placeholder-shown) {
+            border-color: var(--vscode-inputValidation-errorBorder);
+            box-shadow: 0 0 0 1px var(--vscode-inputValidation-errorBorder);
+        }
+        input[type="text"]:valid:not(:placeholder-shown) {
+            border-color: var(--vscode-inputValidation-infoBorder);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Edit ${type === 'page' ? 'Page' : type === 'component' ? 'Component' : type === 'layout' ? 'Layout' : type === 'route' ? 'Route' : type === 'portal.component' ? 'Portal App' : 'Portal Widget'} Info</h1>
+        ${isPortal ? `<div class="readonly-info">Portal Module: <strong>${portalModuleName}</strong></div>` : ''}
+        <form id="appJsonForm">
+            ${fieldsHTML}
+            <div class="button-group">
+                <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                <button type="submit" class="btn-primary" id="saveBtn">Save</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        const vscode = acquireVsCodeApi();
+        
+        const form = document.getElementById('appJsonForm');
+        const cancelBtn = document.getElementById('cancelBtn');
+        
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            // 현재 데이터와 병합 (자동 생성 필드 유지)
+            const currentData = ${JSON.stringify(currentData)};
+            const mergedData = { ...currentData, ...data };
+            
+            vscode.postMessage({
+                command: 'save',
+                data: mergedData
+            });
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            vscode.postMessage({
+                command: 'cancel'
+            });
+        });
+    </script>
+</body>
+</html>`;
+  };
+
   // 특정 파일 타입 열기
   const createOpenFileTypeCommand = (fileName, label, commandName) => {
     return vscode.commands.registerCommand(commandName, async () => {
@@ -665,6 +1137,44 @@ export class Component implements OnInit {
 
       const filePath = activeEditor.document.uri.fsPath;
       const componentPath = appTreeProvider.findComponentPath(filePath);
+
+      // route 파일인지 확인
+      let routePath = null;
+      if (filePath.includes('/route/')) {
+        const routeDir = path.dirname(filePath);
+        const parentDir = path.dirname(routeDir);
+        if (path.basename(parentDir) === 'route') {
+          routePath = routeDir;
+        }
+      }
+
+      // app.json인 경우 웹뷰로 열기
+      if (fileName === 'app.json') {
+        if (!componentPath && !routePath) {
+          vscode.window.showWarningMessage('No component or route found');
+          return;
+        }
+
+        // 프로젝트 경로 가져오기
+        let projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (!projectPath && componentPath) {
+          const parts = componentPath.split(path.sep);
+          const projectIndex = parts.findIndex(p => p === 'project');
+          if (projectIndex !== -1 && projectIndex + 1 < parts.length) {
+            projectPath = parts.slice(0, projectIndex + 2).join(path.sep);
+          }
+        }
+        if (!projectPath && routePath) {
+          const parts = routePath.split(path.sep);
+          const projectIndex = parts.findIndex(p => p === 'project');
+          if (projectIndex !== -1 && projectIndex + 1 < parts.length) {
+            projectPath = parts.slice(0, projectIndex + 2).join(path.sep);
+          }
+        }
+
+        createAppJsonWebView(componentPath, routePath, projectPath);
+        return;
+      }
 
       if (!componentPath) {
         return;
@@ -1030,7 +1540,7 @@ export class Component implements OnInit {
     );
   };
 
-  // Route용 app.json 열기 명령어
+  // Route용 app.json 열기 명령어 (웹뷰로 열기)
   const createOpenRouteAppJsonCommand = (isActive) => {
     return vscode.commands.registerCommand(
       isActive ? 'wiz-extension.openRouteAppJsonActive' : 'wiz-extension.openRouteAppJson',
@@ -1056,25 +1566,17 @@ export class Component implements OnInit {
           return;
         }
 
-        const appJsonPath = path.join(routePath, 'app.json');
-
-        if (!fs.existsSync(appJsonPath)) {
-          vscode.window.showWarningMessage('App.json file not found');
-          return;
+        // 프로젝트 경로 가져오기
+        let projectPath = appTreeProvider ? appTreeProvider.selectedProjectPath : null;
+        if (!projectPath && routePath) {
+          const parts = routePath.split(path.sep);
+          const projectIndex = parts.findIndex(p => p === 'project');
+          if (projectIndex !== -1 && projectIndex + 1 < parts.length) {
+            projectPath = parts.slice(0, projectIndex + 2).join(path.sep);
+          }
         }
 
-        try {
-          const document = await vscode.workspace.openTextDocument(appJsonPath);
-          await vscode.window.showTextDocument(document, {
-            preview: true,
-            viewColumn: vscode.ViewColumn.Active,
-            preserveFocus: false
-          });
-          updateStatusBar();
-        } catch (error) {
-          console.error(`Failed to open ${appJsonPath}:`, error);
-          vscode.window.showErrorMessage(`Failed to open file: ${error.message}`);
-        }
+        createAppJsonWebView(null, routePath, projectPath);
       }
     );
   };
